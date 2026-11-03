@@ -1,0 +1,122 @@
+name: tfi-uch-fyd
+
+# Vista Fisica:
+#   Nodo Gateway  -> gateway (único puerto publicado)
+#   Servidor A -> auth-service + mongo
+#   Servidor B -> stock-service + stock-db, pedidos-service + pedidos-db
+
+networks:
+  edge: # red expuesta: solo el Gateway
+  backend:
+    internal: true # red interna: sin acceso desde afuera ni hacia internet
+
+volumes:
+  mongo-data:
+  stock-db-data:
+  pedidos-db-data:
+
+services:
+  # ---------- Nodo API Gateway ----------
+  gateway:
+    build: ./gateway
+    env_file: .env
+    ports:
+      - "${GATEWAY_PORT}:8000"
+    networks: [edge, backend]
+    depends_on:
+      auth-service: { condition: service_healthy }
+      stock-service: { condition: service_healthy }
+      pedidos-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---------- Servidor A: Autenticación ----------
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+    volumes:
+      - mongo-data:/data/db
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./auth-service
+    env_file: .env
+    networks: [backend]
+    depends_on:
+      mongo: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---------- Servidor B: Stock/Catálogo ----------
+  stock-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${STOCK_DB_USER}
+      POSTGRES_PASSWORD: ${STOCK_DB_PASSWORD}
+      POSTGRES_DB: ${STOCK_DB_NAME}
+    volumes:
+      - stock-db-data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STOCK_DB_USER} -d ${STOCK_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  stock-service:
+    build: ./stock-service
+    env_file: .env
+    environment:
+      SERVICE_NAME: stock
+    networks: [backend]
+    depends_on:
+      stock-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---------- Servidor B: Pedidos ----------
+  pedidos-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${PEDIDOS_DB_USER}
+      POSTGRES_PASSWORD: ${PEDIDOS_DB_PASSWORD}
+      POSTGRES_DB: ${PEDIDOS_DB_NAME}
+    volumes:
+      - pedidos-db-data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PEDIDOS_DB_USER} -d ${PEDIDOS_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pedidos-service:
+    build: ./pedidos-service
+    env_file: .env
+    environment:
+      SERVICE_NAME: pedidos
+    networks: [backend]
+    depends_on:
+      pedidos-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
