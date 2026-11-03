@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: auth-api
+  version: "1.0.0"
+  description: >
+    Contrato del Servicio de Autenticación de UCH-FyD (token issuer).
+    Se consume únicamente a través del API Gateway.
+servers:
+  - url: http://localhost:8080/api/v1/auth
+    description: API Gateway (único punto de entrada)
+paths:
+  /registro:
+    post:
+      summary: registrarUsuario
+      description: Crea una cuenta con rol CLIENTE en estado INACTIVO (RF-01).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegistroRequest" }
+      responses:
+        "201":
+          description: Cuenta creada (inactiva)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Usuario" }
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /login:
+    post:
+      summary: iniciarSesion
+      description: Devuelve un access token JWT firmado con RS256, válido 8 h, sin refresh (ADR-04).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Token emitido
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Token" }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+  /usuarios:
+    get:
+      summary: listarCuentas
+      description: Lista las cuentas, opcionalmente filtradas por estado. Solo ADMIN.
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          schema: { type: string, enum: [ACTIVO, INACTIVO] }
+      responses:
+        "200":
+          description: Lista de cuentas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Usuario" }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+  /usuarios/{id}/activar:
+    patch:
+      summary: activarCuenta
+      description: Activa una cuenta (RF-02). Solo ADMIN.
+      parameters:
+        - $ref: "#/components/parameters/IdUsuario"
+      responses:
+        "200":
+          description: Cuenta activada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Usuario" }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /usuarios/{id}/desactivar:
+    patch:
+      summary: desactivarCuenta
+      description: Desactiva una cuenta. Solo ADMIN. Un token ya emitido sigue vigente hasta expirar (ADR-04).
+      parameters:
+        - $ref: "#/components/parameters/IdUsuario"
+      responses:
+        "200":
+          description: Cuenta desactivada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Usuario" }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IdUsuario:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    RegistroRequest:
+      type: object
+      required: [nombre, email, password]
+      properties:
+        nombre: { type: string, example: Juan Pérez }
+        email: { type: string, format: email, example: juan@mail.com }
+        password: { type: string, minLength: 8 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    Token:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        expires_in: { type: integer, example: 28800 }
+    Usuario:
+      type: object
+      properties:
+        id: { type: string }
+        nombre: { type: string }
+        email: { type: string }
+        rol: { type: string, enum: [ADMIN, CLIENTE] }
+        estado: { type: string, enum: [ACTIVO, INACTIVO] }
+        creadoEn: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        codigo: { type: string, example: CREDENCIALES_INVALIDAS }
+        mensaje: { type: string }
+  responses:
+    Error:
+      description: Error con código y mensaje
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

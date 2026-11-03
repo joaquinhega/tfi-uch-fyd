@@ -1,12 +1,12 @@
 name: tfi-uch-fyd
 
-# Vista Fisica:
+# Topología del TP3 (vista física §7.2):
 #   Nodo Gateway  -> gateway (único puerto publicado)
-#   Servidor A -> auth-service + mongo
-#   Servidor B -> stock-service + stock-db, pedidos-service + pedidos-db
+#   Servidor A    -> auth-service + mongo
+#   Servidor B    -> stock-service + stock-db, pedidos-service + pedidos-db
 
 networks:
-  edge: # red expuesta: solo el Gateway
+  edge:            # red expuesta: solo el Gateway
   backend:
     internal: true # red interna: sin acceso desde afuera ni hacia internet
 
@@ -15,11 +15,22 @@ volumes:
   stock-db-data:
   pedidos-db-data:
 
+# Claves RS256: la privada solo la ve Autenticación (emisor), la pública solo el Gateway (validador)
+secrets:
+  jwt_private_key:
+    file: ./keys/jwt_private.pem
+  jwt_public_key:
+    file: ./keys/jwt_public.pem
+
 services:
   # ---------- Nodo API Gateway ----------
   gateway:
     build: ./gateway
     env_file: .env
+    environment:
+      AUTH_URL: http://auth-service:3000
+      JWT_PUBLIC_KEY_FILE: /run/secrets/jwt_public_key
+    secrets: [jwt_public_key]
     ports:
       - "${GATEWAY_PORT}:8000"
     networks: [edge, backend]
@@ -52,6 +63,9 @@ services:
   auth-service:
     build: ./auth-service
     env_file: .env
+    environment:
+      JWT_PRIVATE_KEY_FILE: /run/secrets/jwt_private_key
+    secrets: [jwt_private_key]
     networks: [backend]
     depends_on:
       mongo: { condition: service_healthy }

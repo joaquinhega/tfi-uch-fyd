@@ -1,6 +1,7 @@
 # Entorno y secretos
 .env
 *.env.local
+keys/
 
 # Node
 node_modules/
