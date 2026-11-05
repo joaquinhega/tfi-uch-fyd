@@ -41,7 +41,7 @@ async def punto_unico_de_entrada(resto: str, request: Request):
         headers["X-User-Role"] = identidad["rol"]
         headers["X-User-Email"] = identidad["email"]
 
-    url = regla.destino + path_interno(path)
+    url = regla.destino + path_interno(path, regla)
     if request.url.query:
         url += f"?{request.url.query}"
 
@@ -49,7 +49,7 @@ async def punto_unico_de_entrada(resto: str, request: Request):
         async with httpx.AsyncClient(timeout=5.0) as cliente:
             resp = await cliente.request(request.method, url, content=await request.body(), headers=headers)
     except httpx.RequestError:
-        # En el Sprint 4 esto pasa a estar controlado por el Circuit Breaker
+        # En el Sprint 4 esto pasa a estar controlado por el Circuit Breaker del Gateway
         return error(503, "SERVICIO_NO_DISPONIBLE", "El servicio no está disponible en este momento")
 
     return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
