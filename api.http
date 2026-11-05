@@ -1,0 +1,89 @@
+### Pruebas manuales — UCH-FyD (vía API Gateway)
+@base = http://localhost:8080/api/v1/auth
+@emailNuevo = prueba1@mail.com
+
+### 1. Registro: la cuenta nace INACTIVA (RF-01) -> 201
+# @name registro
+POST {{base}}/registro
+Content-Type: application/json
+
+{ "nombre": "Usuario de Prueba", "email": "{{emailNuevo}}", "password": "clave1234" }
+
+### 2. Registro duplicado -> 409
+POST {{base}}/registro
+Content-Type: application/json
+
+{ "nombre": "Usuario de Prueba", "email": "{{emailNuevo}}", "password": "clave1234" }
+
+### 3. Registro con datos inválidos -> 400
+POST {{base}}/registro
+Content-Type: application/json
+
+{ "nombre": "", "email": "no-es-email", "password": "123" }
+
+### 4. Login de cuenta inactiva -> 403
+POST {{base}}/login
+Content-Type: application/json
+
+{ "email": "{{emailNuevo}}", "password": "clave1234" }
+
+### 5. Login con contraseña incorrecta -> 401
+POST {{base}}/login
+Content-Type: application/json
+
+{ "email": "{{$dotenv SEED_CLIENTE_EMAIL}}", "password": "incorrecta" }
+
+### 6. Login de cliente activo -> 200 + token
+# @name loginCliente
+POST {{base}}/login
+Content-Type: application/json
+
+{ "email": "{{$dotenv SEED_CLIENTE_EMAIL}}", "password": "{{$dotenv SEED_CLIENTE_PASSWORD}}" }
+
+### 7. Operación de admin SIN token -> 401
+GET {{base}}/usuarios
+
+### 8. Operación de admin con token de CLIENTE -> 403
+GET {{base}}/usuarios
+Authorization: Bearer {{loginCliente.response.body.access_token}}
+
+### 9. Operación de admin con token ALTERADO -> 401
+GET {{base}}/usuarios
+Authorization: Bearer {{loginCliente.response.body.access_token}}x
+
+### 10. Login de admin -> 200 + token
+# @name loginAdmin
+POST {{base}}/login
+Content-Type: application/json
+
+{ "email": "{{$dotenv SEED_ADMIN_EMAIL}}", "password": "{{$dotenv SEED_ADMIN_PASSWORD}}" }
+
+### 11. Admin lista cuentas inactivas -> 200
+GET {{base}}/usuarios?estado=INACTIVO
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### 12. Admin activa la cuenta del paso 1 (RF-02) -> 200
+PATCH {{base}}/usuarios/{{registro.response.body.id}}/activar
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### 13. La cuenta activada ya puede iniciar sesión -> 200
+POST {{base}}/login
+Content-Type: application/json
+
+{ "email": "{{emailNuevo}}", "password": "clave1234" }
+
+### 14. Admin desactiva la cuenta -> 200
+PATCH {{base}}/usuarios/{{registro.response.body.id}}/desactivar
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### 15. Login de la cuenta desactivada -> 403
+POST {{base}}/login
+Content-Type: application/json
+
+{ "email": "{{emailNuevo}}", "password": "clave1234" }
+
+### 16. Ruta que el Gateway no publica -> 404
+GET {{base}}/no-existe
+
+### 17. Contrato auth-api publicado por el Gateway -> 200
+GET {{base}}/openapi.yaml
