@@ -1,3 +1,4 @@
+import contextvars
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as PlazoVencido
@@ -125,7 +126,8 @@ class PedidoService:
             ))
         log("info", "pedido recibido", pedido_id=pedido_id, usuario=identidad.email)
 
-        futuro = _ejecutor.submit(procesar_reserva, pedido_id)
+        # copy_context: la reserva en segundo plano conserva el ID de correlación para los logs
+        futuro = _ejecutor.submit(contextvars.copy_context().run, procesar_reserva, pedido_id)
         try:
             futuro.result(timeout=RESERVA_TIMEOUT_SECONDS)
         except PlazoVencido:

@@ -1,0 +1,52 @@
+### Pruebas manuales — API Gateway
+@gw = http://localhost:8080/api/v1
+
+### 1. Catálogo (público) -> 200. Mirá el encabezado X-Correlation-ID de la respuesta
+GET {{gw}}/stock/catalogo
+
+### 2. Login de cliente
+# @name loginCliente
+POST {{gw}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{$dotenv SEED_CLIENTE_EMAIL}}", "password": "{{$dotenv SEED_CLIENTE_PASSWORD}}" }
+
+### 3. Sin token -> 401 NO_AUTENTICADO
+GET {{gw}}/pedidos
+
+### 4. Token alterado -> 401 (Token inválido)
+GET {{gw}}/pedidos
+Authorization: Bearer {{loginCliente.response.body.access_token}}x
+
+### 5. Token con formato incorrecto -> 401
+GET {{gw}}/pedidos
+Authorization: Bearer abc.def.ghi
+
+### 6. Rol insuficiente: cliente cambiando un precio -> 403 ROL_INSUFICIENTE
+PUT {{gw}}/stock/articulos/1
+Authorization: Bearer {{loginCliente.response.body.access_token}}
+Content-Type: application/json
+
+{ "precio": 1.00 }
+
+### 7. Ruta interna (reservar stock) -> 404 RUTA_NO_ENCONTRADA
+POST {{gw}}/stock/reservas
+Content-Type: application/json
+
+{ "id_pedido": "x", "items": [ { "articulo_id": 1, "cantidad": 1 } ] }
+
+### 8. Pedido para seguir por ID de correlación -> 201. Copiá el X-Correlation-ID de la respuesta
+POST {{gw}}/pedidos
+Authorization: Bearer {{loginCliente.response.body.access_token}}
+Content-Type: application/json
+
+{ "nombre_cliente": "Prueba trazabilidad", "items": [ { "articulo_id": 3, "cantidad": 1 } ] }
+
+### 9. Catálogo (para la prueba del Circuit Breaker con Stock apagado)
+GET {{gw}}/stock/catalogo
+
+### 10. Login (debe seguir funcionando con Stock apagado) -> 200
+POST {{gw}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{$dotenv SEED_CLIENTE_EMAIL}}", "password": "{{$dotenv SEED_CLIENTE_PASSWORD}}" }

@@ -2,6 +2,7 @@ import httpx
 
 from app.circuit_breaker import CircuitBreaker
 from app.config import CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS, STOCK_HTTP_TIMEOUT_SECONDS, STOCK_URL
+from app.contexto import correlation_id
 
 
 class FalloStock(Exception):
@@ -14,7 +15,8 @@ circuito_stock = CircuitBreaker("stock", CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS)
 
 def _post(ruta: str, cuerpo: dict | None = None) -> httpx.Response:
     try:
-        respuesta = _http.post(ruta, json=cuerpo)
+        # El ID de correlación se reenvía a Stock: el mismo pedido se sigue en los logs de ambos servicios
+        respuesta = _http.post(ruta, json=cuerpo, headers={"X-Correlation-ID": correlation_id.get()})
     except httpx.RequestError as error:
         raise FalloStock(f"sin respuesta de Stock ({type(error).__name__})") from error
     if respuesta.status_code >= 500:

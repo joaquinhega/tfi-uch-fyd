@@ -1,3 +1,5 @@
+import time
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -5,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app import models  # noqa: F401  (registra las tablas antes de crearlas)
+from app.contexto import correlation_id
 from app.db import Base, engine
 from app.errores import ErrorNegocio
 from app.logger import log
@@ -29,6 +32,21 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+
+
+@app.middleware("http")
+async def correlacion_y_registro(request: Request, call_next):
+    token = correlation_id.set(request.headers.get("X-Correlation-ID") or str(uuid.uuid4()))
+    inicio = time.perf_counter()
+    try:
+        respuesta = await call_next(request)
+        respuesta.headers["X-Correlation-ID"] = correlation_id.get()
+        if request.url.path != "/health":
+            log("info", "solicitud atendida", metodo=request.method, ruta=request.url.path,
+                status=respuesta.status_code, ms=round((time.perf_counter() - inicio) * 1000, 1))
+        return respuesta
+    finally:
+        correlation_id.reset(token)
 
 
 @app.exception_handler(ErrorNegocio)
