@@ -8,7 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.circuit_breaker import CircuitBreaker, CircuitoAbierto
-from app.config import CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS, CORS_ORIGINS, IP_BLOCKLIST, TIMEOUT_SERVICIOS_SECONDS
+from app.config import (
+    CB_FAIL_MAX,
+    CB_RESET_TIMEOUT_SECONDS,
+    CONNECT_TIMEOUT_SECONDS,
+    CORS_ORIGINS,
+    IP_BLOCKLIST,
+    TIMEOUT_SERVICIOS_SECONDS,
+)
 from app.contexto import correlation_id
 from app.logger import log
 from app.rutas import ADMIN, PUBLICA, SERVICIOS, buscar_regla, url_destino
@@ -21,7 +28,7 @@ class FalloServicio(Exception):
 
 # Un Circuit Breaker por servicio: una caída de Stock no afecta a Autenticación ni a Pedidos
 circuitos = {nombre: CircuitBreaker(nombre, CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS) for nombre in SERVICIOS}
-_http = httpx.AsyncClient(timeout=TIMEOUT_SERVICIOS_SECONDS)
+_http = httpx.AsyncClient(timeout=httpx.Timeout(TIMEOUT_SERVICIOS_SECONDS, connect=CONNECT_TIMEOUT_SECONDS))
 
 
 @asynccontextmanager
