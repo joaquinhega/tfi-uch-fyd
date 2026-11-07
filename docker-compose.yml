@@ -1,12 +1,13 @@
 name: tfi-uch-fyd
 
 # Topología del TP3 (vista física §7.2):
-#   Nodo Gateway  -> gateway (único puerto publicado)
+#   Dispositivo del usuario -> navegador con la SPA (servida por el contenedor frontend)
+#   Nodo Gateway  -> gateway (único punto de entrada a la API)
 #   Servidor A    -> auth-service + mongo
 #   Servidor B    -> stock-service + stock-db, pedidos-service + pedidos-db
 
 networks:
-  edge:            # red expuesta: solo el Gateway
+  edge:            # red expuesta: Gateway y servidor de la SPA
   backend:
     internal: true # red interna: sin acceso desde afuera ni hacia internet
 
@@ -23,6 +24,23 @@ secrets:
     file: ./keys/jwt_public.pem
 
 services:
+  # ---------- SPA (solo archivos estáticos; la lógica corre en el navegador) ----------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${FRONTEND_API_URL}
+    ports:
+      - "${FRONTEND_PORT}:80"
+    networks: [edge]
+    depends_on:
+      gateway: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   # ---------- Nodo API Gateway ----------
   gateway:
     build: ./gateway
@@ -94,8 +112,6 @@ services:
   stock-service:
     build: ./stock-service
     env_file: .env
-    environment:
-      SERVICE_NAME: stock
     networks: [backend]
     depends_on:
       stock-db: { condition: service_healthy }
@@ -124,8 +140,6 @@ services:
   pedidos-service:
     build: ./pedidos-service
     env_file: .env
-    environment:
-      SERVICE_NAME: pedidos
     networks: [backend]
     depends_on:
       pedidos-db: { condition: service_healthy }

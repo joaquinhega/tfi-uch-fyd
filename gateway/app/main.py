@@ -4,10 +4,11 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.circuit_breaker import CircuitBreaker, CircuitoAbierto
-from app.config import CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS, IP_BLOCKLIST, TIMEOUT_SERVICIOS_SECONDS
+from app.config import CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS, CORS_ORIGINS, IP_BLOCKLIST, TIMEOUT_SERVICIOS_SECONDS
 from app.contexto import correlation_id
 from app.logger import log
 from app.rutas import ADMIN, PUBLICA, SERVICIOS, buscar_regla, url_destino
@@ -25,7 +26,7 @@ _http = httpx.AsyncClient(timeout=TIMEOUT_SERVICIOS_SECONDS)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    log("info", "gateway iniciado", ip_bloqueadas=sorted(IP_BLOCKLIST))
+    log("info", "gateway iniciado", ip_bloqueadas=sorted(IP_BLOCKLIST), cors=CORS_ORIGINS)
     yield
     await _http.aclose()
 
@@ -107,3 +108,14 @@ async def punto_unico_de_entrada(resto: str, request: Request):
         return error(503, "SERVICIO_NO_DISPONIBLE", f"El servicio {regla.servicio} no respondió ({e})")
 
     return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
+
+
+# CORS: se agrega al final para que quede como capa más externa y también cubra
+# las respuestas del filtro de IP. Solo el origen de la SPA puede llamar desde el navegador.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
+    expose_headers=["X-Correlation-ID"],
+)
