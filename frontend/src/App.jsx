@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import AvisoServicio from "./componentes/AvisoServicio.jsx";
 import Acceso from "./paginas/Acceso.jsx";
+import Admin from "./paginas/Admin.jsx";
+import Catalogo from "./paginas/Catalogo.jsx";
+import Pedidos from "./paginas/Pedidos.jsx";
 import { cerrarSesion, leerSesion } from "./sesion.js";
 
 const PESTANAS = [
@@ -8,10 +11,6 @@ const PESTANAS = [
   { id: "pedidos", nombre: "Mis pedidos" },
   { id: "admin", nombre: "Administración", soloAdmin: true },
 ];
-
-function Pendiente({ nombre }) {
-  return <p className="text-slate-500">{nombre}: se completa en el paso 5.2.</p>;
-}
 
 export default function App() {
   const [sesion, setSesion] = useState(() => leerSesion());
@@ -59,9 +58,9 @@ export default function App() {
         </nav>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6">
-        {pestana === "catalogo" && <Pendiente nombre="Catálogo" />}
-        {pestana === "pedidos" && <Pendiente nombre="Mis pedidos" />}
-        {pestana === "admin" && sesion.rol === "ADMIN" && <Pendiente nombre="Administración" />}
+        {pestana === "catalogo" && <Catalogo sesion={sesion} />}
+        {pestana === "pedidos" && <Pedidos sesion={sesion} />}
+        {pestana === "admin" && sesion.rol === "ADMIN" && <Admin sesion={sesion} />}
       </main>
     </div>
   );
