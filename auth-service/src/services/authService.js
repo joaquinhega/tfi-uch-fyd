@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { registrarEvento } from "../auditoria.js";
 
 export class ErrorNegocio extends Error {
   constructor(status, codigo, mensaje) {
@@ -31,8 +32,9 @@ export class AuthService {
     if (await this.dao.buscarPorEmail(emailNormalizado)) {
       throw new ErrorNegocio(409, "EMAIL_EXISTENTE", "Ya existe una cuenta con ese email");
     }
+    let usuario;
     try {
-      const usuario = await this.dao.crear({
+      usuario = await this.dao.crear({
         nombre: nombre.trim(),
         email: emailNormalizado,
         passwordHash: await bcrypt.hash(password, 10),
@@ -40,11 +42,13 @@ export class AuthService {
         estado: "INACTIVO",
         creadoEn: new Date(),
       });
-      return aPublico(usuario);
     } catch (error) {
       if (error.code === 11000) throw new ErrorNegocio(409, "EMAIL_EXISTENTE", "Ya existe una cuenta con ese email");
       throw error;
     }
+    const publico = aPublico(usuario);
+    await registrarEvento("CUENTA_REGISTRADA", { usuario_id: publico.id, email: publico.email });
+    return publico;
   }
 
   // RF-03: emite el access token firmado con la clave privada (token issuer)
@@ -68,11 +72,14 @@ export class AuthService {
     return { access_token: token, token_type: "Bearer", expires_in: exp - Math.floor(Date.now() / 1000) };
   }
 
-  // RF-02: activar / desactivar (solo admin)
-  async cambiarEstado(id, estado) {
+  // RF-02: activar / desactivar (solo admin). Queda registrado en la cadena de auditoría.
+  async cambiarEstado(id, estado, adminId) {
     const usuario = await this.dao.actualizarEstado(id, estado);
     if (!usuario) throw new ErrorNegocio(404, "USUARIO_NO_ENCONTRADO", "No existe un usuario con ese id");
-    return aPublico(usuario);
+    const publico = aPublico(usuario);
+    const tipo = estado === "ACTIVO" ? "CUENTA_ACTIVADA" : "CUENTA_DESACTIVADA";
+    await registrarEvento(tipo, { usuario_id: publico.id, email: publico.email, por: adminId ?? "-" });
+    return publico;
   }
 
   async listar(estado) {

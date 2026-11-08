@@ -26,11 +26,11 @@ export function crearRutas(service) {
   }));
 
   router.patch("/usuarios/:id/activar", exigirRol("ADMIN"), manejar(async (req, res) => {
-    res.json(await service.cambiarEstado(req.params.id, "ACTIVO"));
+    res.json(await service.cambiarEstado(req.params.id, "ACTIVO", req.header("X-User-Id")));
   }));
 
   router.patch("/usuarios/:id/desactivar", exigirRol("ADMIN"), manejar(async (req, res) => {
-    res.json(await service.cambiarEstado(req.params.id, "INACTIVO"));
+    res.json(await service.cambiarEstado(req.params.id, "INACTIVO", req.header("X-User-Id")));
   }));
 
   return router;

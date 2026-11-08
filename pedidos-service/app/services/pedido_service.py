@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from app import cliente_stock
 from app.circuit_breaker import CircuitoAbierto
+from app.cliente_auditoria import registrar_evento
 from app.cliente_stock import FalloStock
 from app.config import FAULT_AFTER_RESERVE, RESERVA_TIMEOUT_SECONDS
 from app.dao.pedido_dao import PedidoDao
@@ -45,6 +46,7 @@ def _rechazar(pedido_id: str, motivo: str, detalle: str) -> None:
         pedido.motivo = motivo
         pedido.detalle = detalle[:300]
     log("info", "pedido RECHAZADO", pedido_id=pedido_id, motivo=motivo, detalle=detalle)
+    registrar_evento("PEDIDO_RECHAZADO", {"pedido_id": pedido_id, "motivo": motivo})
 
 
 def _confirmar(pedido_id: str, reserva: dict) -> None:
@@ -62,7 +64,12 @@ def _confirmar(pedido_id: str, reserva: dict) -> None:
         pedido.estado = "ACEPTADO"
         pedido.motivo = None
         pedido.detalle = None
+        usuario = pedido.usuario_email
+        cantidad_items = len(pedido.items)
     log("info", "pedido ACEPTADO", pedido_id=pedido_id, total=total)
+    registrar_evento("PEDIDO_ACEPTADO", {
+        "pedido_id": pedido_id, "usuario": usuario, "total": str(total), "items": cantidad_items,
+    })
 
 
 def _compensar(pedido_id: str) -> None:
