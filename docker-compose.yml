@@ -1,22 +1,21 @@
 name: tfi-uch-fyd
 
-# Topología del TP3 (vista física §7.2):
-#   Dispositivo del usuario -> navegador con la SPA (servida por el contenedor frontend)
-#   Nodo Gateway  -> gateway (único punto de entrada a la API)
-#   Servidor A    -> auth-service + mongo
-#   Servidor B    -> stock-service + stock-db, pedidos-service + pedidos-db
+# Topología del TP3 (vista física §7.2) + Servicio de Auditoría:
+#   Nodo Gateway -> gateway (único punto de entrada a la API)
+#   Servidor A   -> auth-service + mongo, auditoria-service + auditoria-db
+#   Servidor B   -> stock-service + stock-db, pedidos-service + pedidos-db
 
 networks:
-  edge:            # red expuesta: Gateway y servidor de la SPA
+  edge:            # red expuesta: Gateway y SPA
   backend:
-    internal: true # red interna: sin acceso desde afuera ni hacia internet
+    internal: true # red interna: sin acceso desde afuera
 
 volumes:
   mongo-data:
   stock-db-data:
   pedidos-db-data:
+  auditoria-db-data:
 
-# Claves RS256: la privada solo la ve Autenticación (emisor), la pública solo el Gateway (validador)
 secrets:
   jwt_private_key:
     file: ./keys/jwt_private.pem
@@ -24,7 +23,6 @@ secrets:
     file: ./keys/jwt_public.pem
 
 services:
-  # ---------- SPA (solo archivos estáticos; la lógica corre en el navegador) ----------
   frontend:
     build:
       context: ./frontend
@@ -41,12 +39,10 @@ services:
       timeout: 3s
       retries: 5
 
-  # ---------- Nodo API Gateway ----------
   gateway:
     build: ./gateway
     env_file: .env
     environment:
-      AUTH_URL: http://auth-service:3000
       JWT_PUBLIC_KEY_FILE: /run/secrets/jwt_public_key
     secrets: [jwt_public_key]
     ports:
@@ -56,13 +52,14 @@ services:
       auth-service: { condition: service_healthy }
       stock-service: { condition: service_healthy }
       pedidos-service: { condition: service_healthy }
+      auditoria-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 3s
       retries: 5
 
-  # ---------- Servidor A: Autenticación ----------
+  # ---------- Servidor A ----------
   mongo:
     image: mongo:7
     environment:
@@ -93,7 +90,34 @@ services:
       timeout: 3s
       retries: 5
 
-  # ---------- Servidor B: Stock/Catálogo ----------
+  auditoria-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${AUDITORIA_DB_USER}
+      POSTGRES_PASSWORD: ${AUDITORIA_DB_PASSWORD}
+      POSTGRES_DB: ${AUDITORIA_DB_NAME}
+    volumes:
+      - auditoria-db-data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUDITORIA_DB_USER} -d ${AUDITORIA_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auditoria-service:
+    build: ./auditoria-service
+    env_file: .env
+    networks: [backend]
+    depends_on:
+      auditoria-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---------- Servidor B ----------
   stock-db:
     image: postgres:16-alpine
     environment:
@@ -121,7 +145,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ---------- Servidor B: Pedidos ----------
   pedidos-db:
     image: postgres:16-alpine
     environment:

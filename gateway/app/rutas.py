@@ -7,6 +7,7 @@ SERVICIOS = {
     "auth": os.getenv("AUTH_URL", "http://auth-service:3000"),
     "stock": os.getenv("STOCK_URL", "http://stock-service:8000"),
     "pedidos": os.getenv("PEDIDOS_URL", "http://pedidos-service:8000"),
+    "auditoria": os.getenv("AUDITORIA_URL", "http://auditoria-service:8000"),
 }
 
 PUBLICA = "publica"
@@ -25,8 +26,7 @@ class Regla:
 
 UUID = r"[0-9a-fA-F-]{36}"
 
-# Tabla de ruteo y políticas de acceso (WS-Policy aplicado en un punto central, TP3 §5).
-# Cualquier ruta que no esté acá se rechaza con 404 (por ejemplo, reservar y liberar stock, que son internas).
+# Tabla de ruteo y políticas de acceso (TP3 §5). Lo que no está acá responde 404 (rutas internas).
 REGLAS = [
     # auth-api
     Regla("POST", re.compile(r"^/api/v1/auth/registro$"), "auth", PUBLICA),
@@ -44,6 +44,9 @@ REGLAS = [
     Regla("POST", re.compile(r"^/api/v1/pedidos$"), "pedidos", AUTENTICADO, "/v1/pedidos"),
     Regla("GET", re.compile(r"^/api/v1/pedidos$"), "pedidos", AUTENTICADO, "/v1/pedidos"),
     Regla("GET", re.compile(rf"^/api/v1/pedidos/{UUID}$"), "pedidos", AUTENTICADO, "/v1/pedidos"),
+    # auditoria-api: solo lectura y verificación, solo ADMIN
+    Regla("GET", re.compile(r"^/api/v1/auditoria/bloques$"), "auditoria", ADMIN),
+    Regla("GET", re.compile(r"^/api/v1/auditoria/verificacion$"), "auditoria", ADMIN),
 ]
 
 
