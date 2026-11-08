@@ -24,6 +24,15 @@ class ArticuloUpdateIn(BaseModel):
         return self
 
 
+class RecomendacionOut(BaseModel):
+    articulo_id: int
+    nombre: str
+    veces: int
+    soporte: float
+    confianza: float
+    lift: float
+
+
 class ItemReservaIn(BaseModel):
     articulo_id: int
     cantidad: int = Field(gt=0)
