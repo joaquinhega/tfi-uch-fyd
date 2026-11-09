@@ -3,11 +3,10 @@ import { llamar } from "../api.js";
 import { guardarToken } from "../sesion.js";
 import { Boton, Campo, Mensaje } from "../componentes/ui.jsx";
 
-// Usuarios que carga el seed de Autenticación (la contraseña está en el .env)
 const USUARIOS_PRUEBA = [
-  { email: "admin@uchfyd.com", rol: "Administrador", resultado: "Ve todo: catálogo, pedidos de todos, cuentas y auditoría." },
-  { email: "cliente@uchfyd.com", rol: "Cliente", resultado: "Ve el catálogo y solo sus propios pedidos." },
-  { email: "inactivo@uchfyd.com", rol: "Cuenta sin activar", resultado: "El ingreso se rechaza hasta que un administrador la active." },
+  { email: "admin@uchfyd.com", rol: "Administrador" },
+  { email: "cliente@uchfyd.com", rol: "Cliente" },
+  { email: "inactivo@uchfyd.com", rol: "Cuenta inactiva" },
 ];
 
 function Login({ emailInicial, onLogin }) {
@@ -66,7 +65,7 @@ function Registro({ onRegistrado }) {
     <form onSubmit={enviar} className="space-y-4">
       <Campo etiqueta="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
       <Campo etiqueta="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <Campo etiqueta="Contraseña" ayuda="Mínimo 8 caracteres." type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required />
+      <Campo etiqueta="Contraseña (mín. 8)" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required />
       <Mensaje>{error}</Mensaje>
       <Boton type="submit" disabled={cargando} className="w-full">{cargando ? "Creando cuenta..." : "Crear cuenta"}</Boton>
     </form>
@@ -89,13 +88,12 @@ export default function Acceso({ onLogin }) {
       <div className="grid w-full max-w-4xl overflow-hidden rounded-lg border border-linea bg-superficie md:grid-cols-2">
         <div className="p-8">
           <h1 className="text-2xl font-semibold tracking-tight">Tienda</h1>
-          <p className="mt-1 text-sm text-tenue">{modo === "login" ? "Ingresá para ver el catálogo y hacer pedidos." : "Creá tu cuenta. Un administrador tiene que activarla."}</p>
 
           <div className="mt-6 space-y-4">
             {aviso && <Mensaje tipo="ok">{aviso}</Mensaje>}
             {modo === "login"
               ? <Login key={emailElegido} emailInicial={emailElegido} onLogin={onLogin} />
-              : <Registro onRegistrado={() => { setModo("login"); setAviso("Cuenta creada. Podrás ingresar cuando un administrador la active."); }} />}
+              : <Registro onRegistrado={() => { setModo("login"); setAviso("Cuenta creada (inactiva)."); }} />}
           </div>
 
           <p className="mt-6 text-center text-sm text-tenue">
@@ -108,7 +106,6 @@ export default function Acceso({ onLogin }) {
 
         <div className="border-t border-linea bg-fondo/60 p-8 md:border-l md:border-t-0">
           <h2 className="font-semibold">Usuarios de prueba</h2>
-          <p className="mt-1 text-sm text-tenue">Elegí uno para completar el email.</p>
           <ul className="mt-5 space-y-2">
             {USUARIOS_PRUEBA.map((u) => (
               <li key={u.email}>
@@ -120,14 +117,10 @@ export default function Acceso({ onLogin }) {
                     <span className="font-medium">{u.rol}</span>
                     <span className="font-mono text-xs text-tenue">{u.email}</span>
                   </span>
-                  <span className="mt-1 block text-tenue">{u.resultado}</span>
                 </button>
               </li>
             ))}
           </ul>
-          <p className="mt-6 text-sm leading-6 text-tenue">
-            Al ingresar, Autenticación firma un token con su clave privada (RS256). El Gateway lo valida con la clave pública en cada operación y rechaza los que faltan, vencieron o fueron alterados.
-          </p>
         </div>
       </div>
     </div>

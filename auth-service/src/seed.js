@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { log } from "./logger.js";
 
-// Datos de prueba cargados automáticamente; no se duplican si ya existen
+// Datos de prueba
 export async function cargarUsuariosDePrueba(dao, usuarios) {
   for (const u of usuarios) {
     const email = u.email.trim().toLowerCase();

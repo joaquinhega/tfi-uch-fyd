@@ -34,15 +34,13 @@ class CatalogoService:
         raise ErrorNegocio(404, "ARTICULO_NO_ENCONTRADO", f"No existe el artículo {articulo_id}")
 
     def recomendar(self, articulo_id: int) -> list[RecomendacionOut]:
-        """IA (ADR-17): artículos que suelen comprarse junto con el indicado."""
-        self.consultar_articulo(articulo_id)  # 404 si no existe
+        self.consultar_articulo(articulo_id)
         nombres = {a.id: a.nombre for a in self.consultar_catalogo()}
         reglas = reglas_de_asociacion(ReservaDao(self.session).canastas(), articulo_id)
         log("info", "recomendaciones calculadas", articulo_id=articulo_id, cantidad=len(reglas))
         return [RecomendacionOut(nombre=nombres.get(r["articulo_id"], f"Artículo {r['articulo_id']}"), **r) for r in reglas]
 
     def actualizar_stock_y_precio(self, articulo_id: int, datos: ArticuloUpdateIn) -> ArticuloOut:
-        """RF-04 (solo admin). Bloquea la fila para no pisar una reserva en curso y luego invalida la caché."""
         with self.session.begin():
             bloqueados = self.dao.bloquear([articulo_id])
             if not bloqueados:
@@ -53,6 +51,7 @@ class CatalogoService:
             if datos.precio is not None:
                 articulo.precio = datos.precio
 
+        # Invalidación de caché
         cache_catalogo.invalidar()
         log("info", "artículo actualizado por admin; caché invalidada",
             articulo_id=articulo_id, stock=articulo.stock, precio=articulo.precio)

@@ -12,7 +12,7 @@ paths:
   /registro:
     post:
       summary: registrarUsuario
-      description: Crea una cuenta con rol CLIENTE en estado INACTIVO (RF-01).
+      description: Crea una cuenta con rol CLIENTE en estado INACTIVO.
       security: []
       requestBody:
         required: true
@@ -30,7 +30,7 @@ paths:
   /login:
     post:
       summary: iniciarSesion
-      description: Devuelve un access token JWT firmado con RS256, válido 8 h, sin refresh (ADR-04).
+      description: Devuelve un access token JWT firmado con RS256, válido 8 h, sin refresh.
       security: []
       requestBody:
         required: true
@@ -67,7 +67,7 @@ paths:
   /usuarios/{id}/activar:
     patch:
       summary: activarCuenta
-      description: Activa una cuenta (RF-02). Solo ADMIN.
+      description: Activa una cuenta. Solo ADMIN.
       parameters:
         - $ref: "#/components/parameters/IdUsuario"
       responses:
@@ -82,7 +82,7 @@ paths:
   /usuarios/{id}/desactivar:
     patch:
       summary: desactivarCuenta
-      description: Desactiva una cuenta. Solo ADMIN. Un token ya emitido sigue vigente hasta expirar (ADR-04).
+      description: Desactiva una cuenta. Solo ADMIN. Un token ya emitido sigue vigente hasta expirar.
       parameters:
         - $ref: "#/components/parameters/IdUsuario"
       responses:

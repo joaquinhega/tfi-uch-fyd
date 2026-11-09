@@ -1,6 +1,6 @@
 param([int]$Clientes = 50)
 . "$PSScriptRoot\comun.ps1"
-Titulo "3. $Clientes pedidos simultáneos por el último artículo (D1, escenario TP1 §5.2)"
+Titulo "3. $Clientes pedidos simultáneos por el último artículo (bloqueo pesimista)"
 
 $tokenAdmin = TokenAdmin
 $tokenCliente = TokenCliente

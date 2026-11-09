@@ -6,7 +6,7 @@ import EstadoPedido from "../componentes/EstadoPedido.jsx";
 
 const ESPERANDO = ["EN_ESPERA", "PENDIENTE"];
 
-// IA (Sprint 7): artículos que suelen comprarse junto con el elegido (reglas de asociación en Stock)
+// IA: reglas de asociación
 function Recomendaciones({ articuloId, onSumar }) {
   const [lista, setLista] = useState(null);
   const [error, setError] = useState("");
@@ -18,8 +18,8 @@ function Recomendaciones({ articuloId, onSumar }) {
   }, [articuloId]);
 
   if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!lista) return <p className="text-sm text-tenue">Buscando artículos que se compran juntos...</p>;
-  if (lista.length === 0) return <p className="text-sm text-tenue">Todavía no hay pedidos suficientes para sugerir algo.</p>;
+  if (!lista) return <p className="text-sm text-tenue">Cargando...</p>;
+  if (lista.length === 0) return <p className="text-sm text-tenue">Sin sugerencias.</p>;
 
   return (
     <ul className="space-y-2">
@@ -30,7 +30,7 @@ function Recomendaciones({ articuloId, onSumar }) {
             <span className="h-1.5 w-24 overflow-hidden rounded-full bg-linea" aria-hidden="true">
               <span className="block h-full rounded-full bg-acento" style={{ width: `${Math.round(r.confianza * 100)}%` }} />
             </span>
-            {Math.round(r.confianza * 100)} % de los pedidos ({r.veces} veces)
+            {Math.round(r.confianza * 100)} %
           </span>
           <Boton variante="texto" onClick={() => onSumar(r.articulo_id)}>Sumar al pedido</Boton>
         </li>
@@ -39,7 +39,6 @@ function Recomendaciones({ articuloId, onSumar }) {
   );
 }
 
-// Resultado del pedido con su ID de correlación (Log Aggregation)
 function Resultado({ resultado }) {
   const [copiado, setCopiado] = useState(false);
   const comando = resultado.correlacion ? `docker compose logs | Select-String ${resultado.correlacion}` : "";
@@ -50,7 +49,6 @@ function Resultado({ resultado }) {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
     } catch {
-      // sin portapapeles: el comando queda visible para copiarlo a mano
     }
   }
 
@@ -64,7 +62,7 @@ function Resultado({ resultado }) {
       </div>
       {resultado.correlacion && (
         <div className="mt-3 space-y-1.5 text-tinta">
-          <p className="text-tenue">Para seguir este pedido en los logs de todos los servicios:</p>
+          <p className="text-tenue">ID de correlación</p>
           <div className="flex flex-wrap items-center gap-2">
             <Codigo>{comando}</Codigo>
             <Boton variante="texto" onClick={copiar}>{copiado ? "Copiado" : "Copiar"}</Boton>
@@ -115,7 +113,7 @@ export default function Catalogo({ sesion }) {
     return { estado: pedido.estado, texto, correlacion };
   }
 
-  // Modo degradado (TP3 §7.3): si el pedido quedó EN ESPERA, se consulta su estado hasta tener el resultado final
+  // Modo degradado: polling de EN_ESPERA
   async function esperarResultado(id) {
     for (let intento = 0; intento < 30; intento++) {
       await new Promise((r) => setTimeout(r, 2000));
@@ -123,7 +121,6 @@ export default function Catalogo({ sesion }) {
         const { datos } = await llamar("GET", `/pedidos/${id}`, { token: sesion.token });
         if (!ESPERANDO.includes(datos.estado)) return datos;
       } catch {
-        // se reintenta en la próxima vuelta
       }
     }
     return null;
@@ -139,11 +136,11 @@ export default function Catalogo({ sesion }) {
       });
       setCantidades({});
       if (status === 202) {
-        setResultado({ estado: "EN_ESPERA", texto: `Pedido #${datos.numero} recibido. La reserva de stock sigue en curso...`, correlacion });
+        setResultado({ estado: "EN_ESPERA", texto: `Pedido #${datos.numero} en espera...`, correlacion });
         const final = await esperarResultado(datos.id);
         setResultado(final
           ? describir(final, correlacion)
-          : { estado: "EN_ESPERA", texto: `El pedido #${datos.numero} sigue en espera. Consultalo en Pedidos.`, correlacion });
+          : { estado: "EN_ESPERA", texto: `Pedido #${datos.numero} en espera.`, correlacion });
       } else {
         setResultado(describir(datos, correlacion));
       }
@@ -169,7 +166,6 @@ export default function Catalogo({ sesion }) {
   return (
     <Seccion
       titulo="Catálogo"
-      descripcion="El stock puede tener hasta 30 segundos de antigüedad (caché). La disponibilidad real se confirma al hacer el pedido."
       acciones={<Boton variante="secundario" onClick={cargar}>Actualizar</Boton>}
     >
       <Mensaje>{error}</Mensaje>
@@ -216,7 +212,6 @@ export default function Catalogo({ sesion }) {
                   {verSugerencias && (
                     <tr>
                       <td colSpan={4} className="bg-acento-suave/50">
-                        <p className="mb-2 text-xs text-tenue">Quienes compraron {a.nombre} también llevaron:</p>
                         <Recomendaciones articuloId={a.id} onSumar={sumar} />
                       </td>
                     </tr>

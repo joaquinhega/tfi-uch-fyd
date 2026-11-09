@@ -17,7 +17,6 @@ from app.logger import log
 from app.models import Pedido, PedidoItem
 from app.schemas import PedidoIn, PedidoOut
 
-# Hilos donde corre la reserva: permite responder EN_ESPERA sin cortar la reserva en curso
 _ejecutor = ThreadPoolExecutor(max_workers=20, thread_name_prefix="reserva")
 
 CODIGO_HTTP_POR_MOTIVO = {
@@ -37,8 +36,6 @@ def codigo_http(pedido: PedidoOut) -> int:
     return CODIGO_HTTP_POR_MOTIVO.get(pedido.motivo or "", 409)
 
 
-# ---------- Pasos de la reserva (corren en segundo plano) ----------
-
 def _rechazar(pedido_id: str, motivo: str, detalle: str) -> None:
     with SessionLocal() as session, session.begin():
         pedido = PedidoDao(session).obtener(pedido_id)
@@ -51,13 +48,14 @@ def _rechazar(pedido_id: str, motivo: str, detalle: str) -> None:
 
 def _confirmar(pedido_id: str, reserva: dict) -> None:
     with SessionLocal() as session, session.begin():
+        # Inyección de fallo
         if FAULT_AFTER_RESERVE:
             raise RuntimeError("Fallo inyectado después de reservar (FAULT_AFTER_RESERVE=true)")
         pedido = PedidoDao(session).obtener(pedido_id)
         precios = {i["articulo_id"]: Decimal(str(i["precio_unitario"])) for i in reserva["items"]}
         total = Decimal("0")
         for item in pedido.items:
-            item.precio_unitario = precios[item.articulo_id]  # precio congelado al momento del pedido (RF-05)
+            item.precio_unitario = precios[item.articulo_id]
             item.subtotal = item.precio_unitario * item.cantidad
             total += item.subtotal
         pedido.total = total
@@ -72,8 +70,8 @@ def _confirmar(pedido_id: str, reserva: dict) -> None:
     })
 
 
+# Compensación: liberarStock
 def _compensar(pedido_id: str) -> None:
-    """Compensación (TP3 ADR-09): el pedido falló después de reservar, se devuelve el stock."""
     try:
         respuesta = cliente_stock.liberar(pedido_id)
         if respuesta.status_code == 200:
@@ -113,8 +111,6 @@ def procesar_reserva(pedido_id: str) -> None:
     return _rechazar(pedido_id, "RESERVA_RECHAZADA", f"Stock respondió {respuesta.status_code}: {mensaje}")
 
 
-# ---------- Operaciones del contrato pedidos-api ----------
-
 class PedidoService:
     def _leer(self, pedido_id: str) -> Pedido | None:
         with SessionLocal() as session:
@@ -133,12 +129,11 @@ class PedidoService:
             ))
         log("info", "pedido recibido", pedido_id=pedido_id, usuario=identidad.email)
 
-        # copy_context: la reserva en segundo plano conserva el ID de correlación para los logs
+        # Modo degradado: plazo blando -> EN_ESPERA
         futuro = _ejecutor.submit(contextvars.copy_context().run, procesar_reserva, pedido_id)
         try:
             futuro.result(timeout=RESERVA_TIMEOUT_SECONDS)
         except PlazoVencido:
-            # Plazo blando superado (TP2 §6): no se rechaza, queda EN ESPERA y se resuelve en segundo plano
             with SessionLocal() as session, session.begin():
                 if PedidoDao(session).marcar_en_espera_si_pendiente(pedido_id):
                     log("warning", "pedido EN ESPERA: la reserva superó el plazo blando",
@@ -148,7 +143,6 @@ class PedidoService:
 
     def consultar(self, pedido_id: str, identidad: Identidad) -> PedidoOut:
         pedido = self._leer(pedido_id)
-        # A un pedido ajeno se responde 404 (no 403) para no revelar que existe
         if pedido is None or (not identidad.es_admin and pedido.usuario_id != identidad.id):
             raise ErrorNegocio(404, "PEDIDO_NO_ENCONTRADO", f"No existe el pedido {pedido_id}")
         return PedidoOut.model_validate(pedido)

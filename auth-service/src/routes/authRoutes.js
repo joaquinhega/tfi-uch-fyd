@@ -1,5 +1,14 @@
 import { Router } from "express";
-import { exigirRol } from "../middleware/identidadGateway.js";
+
+// Rol propagado por el Gateway
+function exigirRol(rol) {
+  return (req, res, next) => {
+    if (req.header("X-User-Role") !== rol) {
+      return res.status(403).json({ codigo: "ROL_INSUFICIENTE", mensaje: `Operación reservada al rol ${rol}` });
+    }
+    next();
+  };
+}
 
 const manejar = (fn) => async (req, res, next) => {
   try {
@@ -9,7 +18,6 @@ const manejar = (fn) => async (req, res, next) => {
   }
 };
 
-// Operaciones del contrato auth-api (TP3 §2.2)
 export function crearRutas(service) {
   const router = Router();
 

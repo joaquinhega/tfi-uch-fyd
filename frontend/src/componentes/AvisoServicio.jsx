@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-// Aviso de "servicio no disponible" (TP3 §3): aparece ante un 503 o si el Gateway no responde
 export default function AvisoServicio() {
   const [mensaje, setMensaje] = useState(null);
 

@@ -10,14 +10,12 @@ router = APIRouter(prefix="/v1", tags=["Auditoría"])
 
 
 def exigir_admin(request: Request) -> None:
-    # El Gateway valida el token y reenvía el rol (TP3 §5)
     if request.headers.get("X-User-Role") != "ADMIN":
         raise ErrorNegocio(403, "ROL_INSUFICIENTE", "Operación reservada al rol ADMIN")
 
 
 @router.post("/eventos", response_model=BloqueOut, status_code=201, summary="registrarEvento")
 def registrar_evento(evento: EventoIn, session: Session = Depends(get_session)):
-    """Interna: la usan Autenticación y Pedidos. El Gateway no la publica."""
     return AuditoriaService(session).registrar(evento)
 
 

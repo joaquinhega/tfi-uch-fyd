@@ -16,17 +16,16 @@ from app.config import (
     IP_BLOCKLIST,
     TIMEOUT_SERVICIOS_SECONDS,
 )
-from app.contexto import correlation_id
-from app.logger import log
+from app.logger import correlation_id, log
 from app.rutas import ADMIN, PUBLICA, SERVICIOS, buscar_regla, url_destino
 from app.seguridad import validar_token
 
 
 class FalloServicio(Exception):
-    """El servicio no respondió (caída o timeout). Es lo único que cuenta como fallo para el Circuit Breaker."""
+    pass
 
 
-# Un Circuit Breaker por servicio: una caída de Stock no afecta a Autenticación ni a Pedidos
+# Circuit Breaker: uno por servicio
 circuitos = {nombre: CircuitBreaker(nombre, CB_FAIL_MAX, CB_RESET_TIMEOUT_SECONDS) for nombre in SERVICIOS}
 _http = httpx.AsyncClient(timeout=httpx.Timeout(TIMEOUT_SERVICIOS_SECONDS, connect=CONNECT_TIMEOUT_SECONDS))
 
@@ -45,9 +44,9 @@ def error(status: int, codigo: str, mensaje: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"codigo": codigo, "mensaje": mensaje})
 
 
+# ID de correlación + filtro de IP + log
 @app.middleware("http")
 async def correlacion_filtro_ip_y_registro(request: Request, call_next):
-    # El ID lo genera siempre el Gateway: es el punto de entrada y no se confía en lo que mande el cliente
     cid = str(uuid.uuid4())
     token = correlation_id.set(cid)
     inicio = time.perf_counter()
@@ -94,7 +93,7 @@ async def punto_unico_de_entrada(resto: str, request: Request):
         if regla.politica == ADMIN and identidad["rol"] != "ADMIN":
             return error(403, "ROL_INSUFICIENTE", "Operación reservada al rol ADMIN")
 
-    # Solo se reenvía lo necesario; la identidad la fija el Gateway, nunca el cliente
+    # Propagación de identidad
     headers = {"X-Correlation-ID": correlation_id.get()}
     if "content-type" in request.headers:
         headers["content-type"] = request.headers["content-type"]
@@ -117,8 +116,7 @@ async def punto_unico_de_entrada(resto: str, request: Request):
     return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
 
 
-# CORS: se agrega al final para que quede como capa más externa y también cubra
-# las respuestas del filtro de IP. Solo el origen de la SPA puede llamar desde el navegador.
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,

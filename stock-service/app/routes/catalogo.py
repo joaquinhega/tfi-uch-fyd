@@ -23,7 +23,6 @@ def consultar_articulo(articulo_id: int, session: Session = Depends(get_session)
 @router.get("/catalogo/{articulo_id}/recomendaciones", response_model=list[RecomendacionOut],
             summary="recomendarArticulos", responses={404: {"model": ErrorOut}})
 def recomendar_articulos(articulo_id: int, session: Session = Depends(get_session)):
-    """IA: artículos que suelen comprarse junto con el indicado (reglas de asociación)."""
     return CatalogoService(session).recomendar(articulo_id)
 
 

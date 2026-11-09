@@ -19,7 +19,6 @@ const PESTANAS = [
 
 const ROLES = { ADMIN: "Administrador", CLIENTE: "Cliente" };
 
-// Preferencia de la vista (mostrar u ocultar la guía); si el navegador no la guarda, se usa el valor por defecto
 function leerPreferencia(clave, porDefecto) {
   try {
     const valor = localStorage.getItem(clave);
@@ -33,7 +32,6 @@ function guardarPreferencia(clave, valor) {
   try {
     localStorage.setItem(clave, String(valor));
   } catch {
-    // sin almacenamiento: la preferencia dura hasta recargar
   }
 }
 
@@ -42,7 +40,6 @@ export default function App() {
   const [pestana, setPestana] = useState("catalogo");
   const [verGuia, setVerGuia] = useState(() => leerPreferencia("uchfyd_guia", true));
 
-  // Si el Gateway responde 401 con un token (vencido o inválido), se cierra la sesión
   useEffect(() => {
     const salir = () => { cerrarSesion(); setSesion(null); };
     window.addEventListener("sesion-vencida", salir);
@@ -70,10 +67,7 @@ export default function App() {
       <AvisoServicio />
       <header className="border-b border-linea bg-superficie">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 pt-4 sm:px-6">
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-lg font-semibold tracking-tight">Tienda</h1>
-            <span className="hidden text-sm text-tenue sm:inline">Proyecto UCH-FyD</span>
-          </div>
+          <h1 className="text-lg font-semibold tracking-tight">Tienda</h1>
           <div className="flex items-center gap-3 text-sm">
             <span>{sesion.nombre}</span>
             <span className="rounded-full bg-fondo px-2.5 py-0.5 text-xs text-tenue">{ROLES[sesion.rol] ?? sesion.rol}</span>

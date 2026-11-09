@@ -2,13 +2,12 @@ import express from "express";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { config } from "./config.js";
-import { contexto } from "./contexto.js";
 import { conectar } from "./db.js";
 import { UsuarioDao } from "./dao/usuarioDao.js";
 import { AuthService, ErrorNegocio } from "./services/authService.js";
 import { crearRutas } from "./routes/authRoutes.js";
 import { cargarUsuariosDePrueba } from "./seed.js";
-import { log } from "./logger.js";
+import { contexto, log } from "./logger.js";
 
 const db = await conectar();
 const dao = new UsuarioDao(db);
@@ -20,7 +19,7 @@ const contrato = readFileSync(new URL("../openapi.yaml", import.meta.url), "utf8
 const app = express();
 app.use(express.json());
 
-// ID de correlación recibido del Gateway + registro de cada solicitud (Log Aggregation)
+// ID de correlación + log
 app.use((req, res, next) => {
   const correlationId = req.header("X-Correlation-ID") ?? randomUUID();
   const inicio = process.hrtime.bigint();

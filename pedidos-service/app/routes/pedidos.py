@@ -23,18 +23,15 @@ router = APIRouter(prefix="/v1/pedidos", tags=["Pedidos"])
     },
 )
 def crear_pedido(datos: PedidoIn, identidad: Identidad = Depends(exigir_identidad)):
-    """Crea el pedido completo (todos sus ítems en un solo mensaje) y reserva el stock."""
     pedido = PedidoService().crear(datos, identidad)
     return JSONResponse(status_code=codigo_http(pedido), content=pedido.model_dump(mode="json"))
 
 
 @router.get("", response_model=list[PedidoOut], summary="listarPedidos")
 def listar_pedidos(identidad: Identidad = Depends(exigir_identidad)):
-    """El cliente ve sus pedidos; el administrador ve todos."""
     return PedidoService().listar(identidad)
 
 
 @router.get("/{pedido_id}", response_model=PedidoOut, summary="consultarPedido", responses={404: {"model": ErrorOut}})
 def consultar_pedido(pedido_id: str, identidad: Identidad = Depends(exigir_identidad)):
-    """Estado actual del pedido (por ejemplo, el resultado final de uno que quedó EN_ESPERA)."""
     return PedidoService().consultar(pedido_id, identidad)

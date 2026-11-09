@@ -1,4 +1,4 @@
-// Genera el par de claves RS256 del token. La privada firma (Autenticación), la pública valida (Gateway).
+// Par RS256: privada -> Autenticación, pública -> Gateway
 import { generateKeyPairSync } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 

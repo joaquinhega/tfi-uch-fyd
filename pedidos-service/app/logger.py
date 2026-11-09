@@ -1,11 +1,12 @@
 import json
 import sys
+from contextvars import ContextVar
 from datetime import datetime, timezone
 
-from app.contexto import correlation_id
+correlation_id: ContextVar[str] = ContextVar("correlation_id", default="-")
 
 
-# Logs en JSON a stdout con ID de correlación: base del Log Aggregation (TP2 §4.1, TP3 §4.1)
+# Log Aggregation: JSON + ID de correlación
 def log(level: str, msg: str, **extra) -> None:
     registro = {
         "ts": datetime.now(timezone.utc).isoformat(),

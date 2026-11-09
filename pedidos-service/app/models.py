@@ -11,12 +11,12 @@ class Pedido(Base):
     __tablename__ = "pedidos"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    numero: Mapped[int] = mapped_column(Integer, Identity(), unique=True)  # número visible del pedido (TP1 §1.1)
+    numero: Mapped[int] = mapped_column(Integer, Identity(), unique=True)
     fecha: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     usuario_id: Mapped[str] = mapped_column(String(64), index=True)
     usuario_email: Mapped[str] = mapped_column(String(120))
-    nombre_cliente: Mapped[str] = mapped_column(String(120))  # puede no ser el usuario (TP1 supuesto 4)
-    estado: Mapped[str] = mapped_column(String(12))  # PENDIENTE | EN_ESPERA | ACEPTADO | RECHAZADO
+    nombre_cliente: Mapped[str] = mapped_column(String(120))
+    estado: Mapped[str] = mapped_column(String(12))
     motivo: Mapped[str | None] = mapped_column(String(40), nullable=True)
     detalle: Mapped[str | None] = mapped_column(String(300), nullable=True)
     total: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
@@ -33,8 +33,8 @@ class PedidoItem(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     pedido_id: Mapped[str] = mapped_column(ForeignKey("pedidos.id"))
-    articulo_id: Mapped[int] = mapped_column(Integer)  # referencia lógica: el artículo vive en la base de Stock
+    articulo_id: Mapped[int] = mapped_column(Integer)
     cantidad: Mapped[int] = mapped_column(Integer)
-    precio_unitario: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)  # congelado (RF-05)
+    precio_unitario: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     subtotal: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     pedido: Mapped[Pedido] = relationship(back_populates="items")

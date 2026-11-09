@@ -23,7 +23,7 @@ export class AuthService {
     this.jwt = jwtConfig;
   }
 
-  // RF-01: toda cuenta nueva nace INACTIVA y con rol CLIENTE
+  // Cuenta nueva: CLIENTE e INACTIVA
   async registrar({ nombre, email, password }) {
     if (!nombre?.trim() || !EMAIL_VALIDO.test(email ?? "") || (password ?? "").length < 8) {
       throw new ErrorNegocio(400, "DATOS_INVALIDOS", "Nombre, email válido y contraseña de al menos 8 caracteres son obligatorios");
@@ -51,7 +51,7 @@ export class AuthService {
     return publico;
   }
 
-  // RF-03: emite el access token firmado con la clave privada (token issuer)
+  // Token issuer: JWT RS256 con clave privada
   async iniciarSesion({ email, password }) {
     if (!email || !password) {
       throw new ErrorNegocio(400, "DATOS_INVALIDOS", "Email y contraseña son obligatorios");
@@ -72,7 +72,6 @@ export class AuthService {
     return { access_token: token, token_type: "Bearer", expires_in: exp - Math.floor(Date.now() / 1000) };
   }
 
-  // RF-02: activar / desactivar (solo admin). Queda registrado en la cadena de auditoría.
   async cambiarEstado(id, estado, adminId) {
     const usuario = await this.dao.actualizarEstado(id, estado);
     if (!usuario) throw new ErrorNegocio(404, "USUARIO_NO_ENCONTRADO", "No existe un usuario con ese id");

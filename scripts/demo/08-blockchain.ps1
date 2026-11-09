@@ -1,7 +1,7 @@
 . "$PSScriptRoot\comun.ps1"
 Titulo "8. Blockchain: registro de auditoría inmutable"
 
-# Cambia el total de un bloque DIRECTAMENTE en la base de Auditoría (simula un ataque). Devuelve el valor anterior.
+# Ataque simulado: cambia un bloque directo en la base
 function CambiarTotal([int]$Indice, [string]$Total) {
   $codigo = "from app.db import SessionLocal; from app.models import Bloque; s = SessionLocal(); b = s.get(Bloque, $Indice); d = dict(b.datos); anterior = d.get('total'); d['total'] = '$Total'; b.datos = d; s.commit(); print(anterior)"
   docker compose exec -T auditoria-service python -c $codigo

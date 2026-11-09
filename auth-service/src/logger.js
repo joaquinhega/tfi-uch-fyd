@@ -1,6 +1,12 @@
-import { correlationId } from "./contexto.js";
+import { AsyncLocalStorage } from "node:async_hooks";
 
-// Logs en JSON a stdout con ID de correlación: base del Log Aggregation (TP2 §4.1, TP3 §4.1)
+export const contexto = new AsyncLocalStorage();
+
+export function correlationId() {
+  return contexto.getStore()?.correlationId ?? "-";
+}
+
+// Log Aggregation: JSON + ID de correlación
 export function log(level, msg, extra = {}) {
   console.log(JSON.stringify({
     ts: new Date().toISOString(),

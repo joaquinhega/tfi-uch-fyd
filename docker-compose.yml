@@ -1,14 +1,9 @@
 name: tfi-uch-fyd
 
-# Topología del TP3 (vista física §7.2) + Servicio de Auditoría:
-#   Nodo Gateway -> gateway (único punto de entrada a la API)
-#   Servidor A   -> auth-service + mongo, auditoria-service + auditoria-db
-#   Servidor B   -> stock-service + stock-db, pedidos-service + pedidos-db
-
 networks:
-  edge:            # red expuesta: Gateway y SPA
+  edge:
   backend:
-    internal: true # red interna: sin acceso desde afuera
+    internal: true
 
 volumes:
   mongo-data:
@@ -59,7 +54,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # ---------- Servidor A ----------
+  # Servidor A
   mongo:
     image: mongo:7
     environment:
@@ -117,7 +112,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # ---------- Servidor B ----------
+  # Servidor B
   stock-db:
     image: postgres:16-alpine
     environment:

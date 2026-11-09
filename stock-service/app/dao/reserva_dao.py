@@ -20,7 +20,6 @@ class ReservaDao:
         self.session.add(reserva)
 
     def canastas(self) -> list[set[int]]:
-        """Artículos de cada reserva vigente: la materia prima de las recomendaciones."""
         filas = self.session.execute(
             select(ReservaItem.id_pedido, ReservaItem.articulo_id).join(Reserva).where(Reserva.estado == "RESERVADA")
         )

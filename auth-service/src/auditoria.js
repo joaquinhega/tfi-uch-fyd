@@ -1,9 +1,8 @@
-import { correlationId } from "./contexto.js";
-import { log } from "./logger.js";
+import { correlationId, log } from "./logger.js";
 
 const URL_AUDITORIA = process.env.AUDITORIA_URL ?? "http://auditoria-service:8000";
 
-// Envía un evento a la cadena de auditoría. Si falla, la operación sigue (igual que Log Aggregation).
+// Blockchain: si Auditoría falla, la operación sigue
 export async function registrarEvento(tipo, datos) {
   try {
     const respuesta = await fetch(`${URL_AUDITORIA}/v1/eventos`, {

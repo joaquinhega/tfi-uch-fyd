@@ -1,9 +1,3 @@
-"""Mantiene bloqueada la fila del articulo 2 durante 8 segundos.
-
-Simula otra compra larga en curso, para que un pedido nuevo supere el plazo blando de 2 s
-y quede EN ESPERA (TP2 §6, TP3 §7.3). Se ejecuta dentro del contenedor de Stock:
-  Get-Content scripts/demo/s3-bloquear-articulo.py -Raw | docker compose exec -T stock-service python -
-"""
 import time
 
 from sqlalchemy import select

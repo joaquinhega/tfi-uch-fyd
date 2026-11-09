@@ -3,9 +3,8 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.cadena import HASH_GENESIS, calcular_hash, verificar_cadena
-from app.contexto import correlation_id
 from app.dao.bloque_dao import BloqueDao
-from app.logger import log
+from app.logger import correlation_id, log
 from app.models import Bloque
 from app.schemas import BloqueOut, EventoIn, VerificacionOut
 

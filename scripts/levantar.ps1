@@ -1,6 +1,4 @@
-# Levanta todo el sistema desde cero con un solo comando.
-#   pwsh scripts/levantar.ps1           -> levanta (conserva los datos)
-#   pwsh scripts/levantar.ps1 -Limpio   -> borra bases y volúmenes y arranca de cero
+# pwsh scripts/levantar.ps1 [-Limpio]
 param([switch]$Limpio)
 $ErrorActionPreference = "Stop"
 Set-Location (Resolve-Path "$PSScriptRoot\..").Path

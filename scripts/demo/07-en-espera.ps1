@@ -1,10 +1,10 @@
 . "$PSScriptRoot\comun.ps1"
-Titulo "7. Modo degradado: pedido EN ESPERA (TP2 §6, TP3 §7.3)"
+Titulo "7. Modo degradado: pedido EN ESPERA"
 
 $token = TokenCliente
 Paso "Bloqueando el artículo 2 durante 8 s (simula otra compra larga en curso)..."
 $trabajo = Start-Job -WorkingDirectory $Raiz -ScriptBlock {
-  Get-Content scripts/demo/s3-bloquear-articulo.py -Raw | docker compose exec -T stock-service python -
+  Get-Content scripts/demo/bloquear-articulo.py -Raw | docker compose exec -T stock-service python -
 }
 $bloqueado = $false
 for ($i = 0; $i -lt 20 -and -not $bloqueado; $i++) {

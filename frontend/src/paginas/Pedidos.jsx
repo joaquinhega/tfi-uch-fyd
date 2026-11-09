@@ -27,13 +27,12 @@ export default function Pedidos({ sesion }) {
 
   useEffect(() => {
     cargar();
-    // Nombres de los artículos (el pedido solo guarda el id; el nombre vive en Stock)
     llamar("GET", "/stock/catalogo")
       .then(({ datos }) => setNombres(Object.fromEntries(datos.map((a) => [a.id, a.nombre]))))
       .catch(() => {});
   }, [cargar]);
 
-  // Si hay pedidos EN ESPERA, se vuelve a consultar cada 2 s hasta que se resuelvan
+  // Modo degradado: polling de EN_ESPERA
   useEffect(() => {
     if (!pedidos.some((p) => ESPERANDO.includes(p.estado))) return undefined;
     const temporizador = setTimeout(cargar, 2000);
@@ -45,12 +44,11 @@ export default function Pedidos({ sesion }) {
   return (
     <Seccion
       titulo={esAdmin ? "Todos los pedidos" : "Mis pedidos"}
-      descripcion={esAdmin ? "Como administrador ves los pedidos de todos los clientes." : "Solo ves los pedidos hechos con tu cuenta."}
       acciones={<Boton variante="secundario" onClick={cargar}>Actualizar</Boton>}
     >
       <Mensaje>{error}</Mensaje>
       {pedidos.length === 0 && !error && (
-        <Panel className="p-8 text-center text-sm text-tenue">Todavía no hay pedidos. Hacé el primero desde el catálogo.</Panel>
+        <Panel className="p-8 text-center text-sm text-tenue">Sin pedidos.</Panel>
       )}
 
       {pedidos.length > 0 && (

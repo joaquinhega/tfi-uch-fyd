@@ -1,4 +1,3 @@
-# Funciones comunes de los scripts de demo. Requiere PowerShell 7+.
 $ErrorActionPreference = "Stop"
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw "Estos scripts requieren PowerShell 7 (pwsh)." }
 
@@ -7,7 +6,6 @@ Set-Location $Raiz
 $Gw = "http://127.0.0.1:8080/api/v1"
 $script:Fallas = 0
 
-# Configuración y usuarios de prueba desde .env
 $Cfg = @{}
 Get-Content "$Raiz\.env" | Where-Object { $_ -match '^\s*([^#=]+)=(.*)$' } |
   ForEach-Object { $Cfg[$matches[1].Trim()] = $matches[2].Trim() }
@@ -33,7 +31,7 @@ function Resultado {
   exit 1
 }
 
-# Llamada a la API, siempre a través del Gateway
+# Siempre a través del Gateway
 function Llamar {
   param([string]$Metodo, [string]$Ruta, $Cuerpo = $null, [string]$Token = $null)
   $headers = @{}
@@ -57,7 +55,6 @@ function Token([string]$Email, [string]$Password) {
 function TokenCliente { Token $Cfg.SEED_CLIENTE_EMAIL $Cfg.SEED_CLIENTE_PASSWORD }
 function TokenAdmin { Token $Cfg.SEED_ADMIN_EMAIL $Cfg.SEED_ADMIN_PASSWORD }
 
-# Consulta el pedido hasta que deje de estar EN_ESPERA (modo degradado)
 function EsperarPedido([string]$Id, [string]$TokenUsuario, [int]$Segundos = 30) {
   for ($i = 0; $i -lt $Segundos; $i++) {
     $r = Llamar GET "/pedidos/$Id" -Token $TokenUsuario
@@ -67,13 +64,13 @@ function EsperarPedido([string]$Id, [string]$TokenUsuario, [int]$Segundos = 30) 
   return $r.Body
 }
 
-# Stock real leído de la base de Stock (el catálogo puede venir de la caché)
+# Stock real (sin caché)
 function StockReal([int]$ArticuloId) {
   $codigo = "from app.db import SessionLocal; from app.models import Articulo; print(SessionLocal().get(Articulo, $ArticuloId).stock)"
   [int](docker compose exec -T stock-service python -c $codigo)
 }
 
-# Todos los registros (de cualquier servicio) con un ID de correlación, ordenados en el tiempo
+# Log Aggregation: logs de todos los servicios por ID de correlación
 function LogsDe([string]$CorrelationId) {
   docker compose logs --no-color --no-log-prefix 2>$null |
     Where-Object { $_ -match [regex]::Escape($CorrelationId) } |

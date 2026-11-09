@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { llamar } from "../api.js";
 import { Boton, Panel, Seccion } from "../componentes/ui.jsx";
 
-// /health del Gateway (público): devuelve el estado del Circuit Breaker de cada servicio
+// Estado de los circuitos desde /health del Gateway
 const URL_HEALTH = (import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1").replace(/\/api\/v1\/?$/, "") + "/health";
 
 const CIRCUITO = {
@@ -12,7 +12,6 @@ const CIRCUITO = {
   DESCONOCIDO: { texto: "Sin datos", color: "var(--color-tenue)", fondo: "var(--color-fondo)" },
 };
 
-// Vista lógica del TP3: un nodo por servicio, cada uno con su base propia
 const SERVICIOS = [
   { id: "auth", nombre: "Autenticación", detalle: "Node.js, emite el token", base: "MongoDB", y: 30 },
   { id: "stock", nombre: "Stock y catálogo", detalle: "FastAPI, caché e IA", base: "PostgreSQL", y: 140 },
@@ -41,27 +40,23 @@ function Diagrama({ circuitos, gatewayVivo }) {
         </marker>
       </defs>
 
-      {/* Red interna: los servicios y sus bases no se publican fuera de Docker */}
       <rect x="480" y="10" width="430" height="455" rx="12" fill="var(--color-fondo)" stroke="var(--color-linea)" strokeDasharray="6 5" />
-      <text x="496" y="452" fontSize="12" fill="var(--color-tenue)">Red interna: solo el Gateway llega a los servicios</text>
+      <text x="496" y="452" fontSize="12" fill="var(--color-tenue)">Red interna</text>
 
-      {/* Navegador -> Gateway */}
       <Nodo x={10} y={185} ancho={150} alto={70} titulo="Navegador" detalle="React (esta página)" />
       <line x1="160" y1="220" x2="208" y2="220" stroke="var(--color-tenue)" strokeWidth="1.5" markerEnd="url(#flecha)" />
 
-      {/* Gateway */}
       <g>
         <rect x="210" y="105" width="220" height="230" rx="8" fill="var(--color-superficie)" stroke={gatewayVivo ? "var(--color-acento)" : "var(--color-error)"} strokeWidth="2" />
         <text x="226" y="133" fontSize="15" fontWeight="600" fill="var(--color-tinta)">API Gateway</text>
         <text x="226" y="152" fontSize="12" fill={gatewayVivo ? "var(--color-acento)" : "var(--color-error)"}>
-          {gatewayVivo ? "Único punto de entrada" : "No responde"}
+          {gatewayVivo ? "Punto único de entrada" : "No responde"}
         </text>
         {GATEWAY.map((linea, i) => (
           <text key={linea} x="226" y={184 + i * 26} fontSize="12" fill="var(--color-tenue)">{linea}</text>
         ))}
       </g>
 
-      {/* Gateway -> servicios, con el estado del circuito sobre cada enlace */}
       {SERVICIOS.map((s) => {
         const estado = CIRCUITO[circuitos?.[s.id]] ?? CIRCUITO.DESCONOCIDO;
         const yMedio = s.y + 35;
@@ -80,11 +75,10 @@ function Diagrama({ circuitos, gatewayVivo }) {
         );
       })}
 
-      {/* Comunicación entre servicios */}
       <line x1="560" y1="250" x2="560" y2="212" stroke="var(--color-acento)" strokeWidth="1.5" markerEnd="url(#flecha)" />
       <text x="566" y="229" fontSize="11" fill="var(--color-acento)">reservar y liberar stock</text>
       <line x1="560" y1="320" x2="560" y2="358" stroke="var(--color-tenue)" strokeWidth="1.5" strokeDasharray="4 3" markerEnd="url(#flecha)" />
-      <text x="566" y="339" fontSize="11" fill="var(--color-tenue)">eventos (también de Autenticación)</text>
+      <text x="566" y="339" fontSize="11" fill="var(--color-tenue)">eventos</text>
     </svg>
   );
 }
@@ -95,7 +89,6 @@ export default function Arquitectura() {
   const [intentos, setIntentos] = useState([]);
   const [consultando, setConsultando] = useState(false);
 
-  // Se consulta el estado de los circuitos cada 2 segundos
   useEffect(() => {
     let activo = true;
     async function consultar() {
@@ -112,14 +105,13 @@ export default function Arquitectura() {
     return () => { activo = false; clearInterval(temporizador); };
   }, []);
 
-  // Llamada de prueba a Stock a través del Gateway, para ver cómo reacciona el circuito
   async function probarStock() {
     setConsultando(true);
     const inicio = performance.now();
     let resultado;
     try {
       const { status } = await llamar("GET", "/stock/catalogo");
-      resultado = { status, texto: "Catálogo recibido" };
+      resultado = { status, texto: "OK" };
     } catch (e) {
       resultado = { status: e.status, texto: e.message };
     }
@@ -129,26 +121,20 @@ export default function Arquitectura() {
   }
 
   return (
-    <Seccion
-      titulo="Arquitectura"
-      descripcion="Cada pedido entra por el Gateway, que decide si pasa y a qué servicio va. El color de cada enlace es el estado de su Circuit Breaker, consultado en vivo."
-    >
+    <Seccion titulo="Arquitectura">
       <Panel className="p-4">
         <Diagrama circuitos={salud?.circuitos} gatewayVivo={gatewayVivo} />
       </Panel>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-tenue">
-        <span><strong className="font-medium text-ok">Cerrado:</strong> las llamadas pasan.</span>
-        <span><strong className="font-medium text-error">Abierto:</strong> tras 3 fallos, rechaza al instante sin llamar al servicio.</span>
-        <span><strong className="font-medium text-espera">Semiabierto:</strong> pasados 15 s, deja pasar una llamada de prueba.</span>
+        <span className="text-ok">Cerrado</span>
+        <span className="text-error">Abierto (3 fallos)</span>
+        <span className="text-espera">Semiabierto (15 s)</span>
       </div>
 
       <Panel className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold">Probar el Circuit Breaker de Stock</h3>
-            <p className="mt-1 text-sm text-tenue">Con Stock apagado, consultá varias veces y mirá cuánto tarda cada respuesta.</p>
-          </div>
+          <h3 className="font-semibold">Circuit Breaker de Stock</h3>
           <Boton onClick={probarStock} disabled={consultando}>{consultando ? "Consultando..." : "Consultar catálogo"}</Boton>
         </div>
         {intentos.length > 0 && (

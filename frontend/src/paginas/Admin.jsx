@@ -7,7 +7,6 @@ const ESTADOS_CUENTA = { ACTIVO: "Activa", INACTIVO: "Sin activar" };
 const ROLES = { ADMIN: "Administrador", CLIENTE: "Cliente" };
 const entrada = "rounded-md border border-linea bg-superficie px-2 py-1.5 text-right outline-none focus:border-acento focus:ring-2 focus:ring-acento/20";
 
-// RF-02: activación de cuentas
 function Cuentas({ sesion }) {
   const [filtro, setFiltro] = useState("INACTIVO");
   const [usuarios, setUsuarios] = useState([]);
@@ -39,7 +38,6 @@ function Cuentas({ sesion }) {
   return (
     <Seccion
       titulo="Cuentas"
-      descripcion="Las cuentas nuevas no pueden ingresar hasta que las actives."
       acciones={
         <select aria-label="Filtrar cuentas" value={filtro} onChange={(e) => setFiltro(e.target.value)} className="rounded-md border border-linea bg-superficie px-3 py-2 text-sm">
           <option value="INACTIVO">Sin activar</option>
@@ -88,7 +86,6 @@ function Cuentas({ sesion }) {
   );
 }
 
-// RF-04: stock y precio
 function Articulos({ sesion }) {
   const [articulos, setArticulos] = useState([]);
   const [cambios, setCambios] = useState({});
@@ -119,7 +116,7 @@ function Articulos({ sesion }) {
     setMensaje(null);
     try {
       await llamar("PUT", `/stock/articulos/${articulo.id}`, { token: sesion.token, cuerpo });
-      setMensaje({ tipo: "ok", texto: `${articulo.nombre} guardado. El catálogo ya muestra el valor nuevo.` });
+      setMensaje({ tipo: "ok", texto: `${articulo.nombre} guardado.` });
       cargar();
     } catch (e) {
       if (e.status !== 0) setMensaje({ tipo: "error", texto: e.message });
@@ -127,7 +124,7 @@ function Articulos({ sesion }) {
   }
 
   return (
-    <Seccion titulo="Stock y precios" descripcion="Completá solo lo que quieras cambiar. Al guardar se actualiza la caché del catálogo.">
+    <Seccion titulo="Stock y precios">
       {mensaje && <Mensaje tipo={mensaje.tipo}>{mensaje.texto}</Mensaje>}
       <Panel>
         <table className="tabla">

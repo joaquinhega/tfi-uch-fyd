@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.models import Pedido
 
 
-# Patrón DAO (TP2 §4.1)
+# DAO
 class PedidoDao:
     def __init__(self, session: Session):
         self.session = session
@@ -22,7 +22,6 @@ class PedidoDao:
         return list(self.session.scalars(consulta))
 
     def marcar_en_espera_si_pendiente(self, pedido_id: str) -> bool:
-        """Solo pasa a EN_ESPERA si la reserva todavía no terminó (evita pisar un resultado final)."""
         resultado = self.session.execute(
             update(Pedido).where(Pedido.id == pedido_id, Pedido.estado == "PENDIENTE").values(estado="EN_ESPERA")
         )

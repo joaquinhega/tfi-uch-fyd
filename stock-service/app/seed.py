@@ -7,7 +7,6 @@ from app.db import SessionLocal
 from app.logger import log
 from app.models import Articulo, Reserva, ReservaItem
 
-# Datos de prueba. ART-005 tiene stock 1 para la demo de concurrencia (D1).
 ARTICULOS = [
     ("ART-001", "Auriculares inalámbricos", 50, "45000.00"),
     ("ART-002", "Teclado mecánico", 30, "85000.00"),
@@ -16,12 +15,12 @@ ARTICULOS = [
     ("ART-005", "Parlante edición limitada", 1, "120000.00"),
 ]
 
-# Pedidos históricos para la IA: (artículos del pedido, cantidad de pedidos)
+# Historial para la IA: (artículos, cantidad de pedidos)
 HISTORIAL = [
-    ((2, 3), 12),     # teclado + mouse
-    ((2, 3, 4), 5),   # teclado + mouse + monitor
-    ((1, 5), 4),      # auriculares + parlante
-    ((1, 3), 2),      # auriculares + mouse
+    ((2, 3), 12),
+    ((2, 3, 4), 5),
+    ((1, 5), 4),
+    ((1, 3), 2),
     ((1,), 6),
     ((3,), 8),
     ((4,), 3),

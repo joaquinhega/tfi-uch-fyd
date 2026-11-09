@@ -8,8 +8,8 @@ class BloqueDao:
     def __init__(self, session: Session):
         self.session = session
 
+    # Un bloque a la vez (advisory lock)
     def bloquear_cadena(self) -> None:
-        """Candado de transacción: dos eventos simultáneos se encadenan de a uno."""
         self.session.execute(text("SELECT pg_advisory_xact_lock(16)"))
 
     def ultimo(self) -> Bloque | None:

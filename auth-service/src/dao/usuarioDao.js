@@ -1,7 +1,6 @@
 import { ObjectId } from "mongodb";
 
-// Patrón DAO (TP2 §4.1): la lógica de negocio no conoce MongoDB.
-// Cambiar de motor implica reescribir solo esta clase.
+// DAO
 export class UsuarioDao {
   constructor(db) {
     this.col = db.collection("usuarios");

@@ -5,18 +5,11 @@ from app.logger import log
 
 
 class CircuitoAbierto(Exception):
-    """Se rechaza la llamada sin intentarla: el servicio remoto viene fallando."""
+    pass
 
 
+# Circuit Breaker: CERRADO -> ABIERTO -> SEMIABIERTO
 class CircuitBreaker:
-    """Patrón Circuit Breaker (TP2 §4.1, TP3 §3).
-
-    CERRADO     -> las llamadas pasan. Cuenta fallos consecutivos.
-    ABIERTO     -> tras N fallos, se rechaza todo al instante (no se espera a un servicio caído).
-    SEMIABIERTO -> pasado el tiempo de espera, se deja pasar UNA llamada de prueba:
-                   si funciona, se cierra; si falla, se vuelve a abrir.
-    """
-
     CERRADO = "CERRADO"
     ABIERTO = "ABIERTO"
     SEMIABIERTO = "SEMIABIERTO"

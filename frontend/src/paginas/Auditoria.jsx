@@ -23,7 +23,6 @@ function Hash({ valor, resaltar }) {
   return <span className={`font-mono text-xs ${resaltar ? "text-error" : "text-tenue"}`} title={valor}>{valor?.slice(0, 12)}</span>;
 }
 
-// Blockchain (Sprint 7): cada bloque guarda el hash del anterior; si se modifica uno, la cadena deja de cerrar
 export default function Auditoria({ sesion }) {
   const [bloques, setBloques] = useState([]);
   const [verificacion, setVerificacion] = useState(null);
@@ -61,7 +60,6 @@ export default function Auditoria({ sesion }) {
   return (
     <Seccion
       titulo="Auditoría"
-      descripcion="Cada evento importante queda en un bloque que guarda el hash del bloque anterior. Si alguien modifica un bloque en la base, la verificación lo detecta."
       acciones={
         <>
           <Boton variante="secundario" onClick={cargar}>Actualizar</Boton>
@@ -72,8 +70,8 @@ export default function Auditoria({ sesion }) {
       <Mensaje>{error}</Mensaje>
       {verificacion && (
         verificacion.valida
-          ? <Mensaje tipo="ok">La cadena es válida: se verificaron {verificacion.bloques_verificados} bloques y ninguno fue modificado.</Mensaje>
-          : <Mensaje tipo="error">La cadena fue alterada en el bloque #{invalido}. {verificacion.motivo}</Mensaje>
+          ? <Mensaje tipo="ok">Cadena válida ({verificacion.bloques_verificados} bloques).</Mensaje>
+          : <Mensaje tipo="error">Cadena alterada en el bloque #{invalido}. {verificacion.motivo}</Mensaje>
       )}
 
       <Panel>
@@ -90,7 +88,7 @@ export default function Auditoria({ sesion }) {
           </thead>
           <tbody>
             {bloques.length === 0 && !error && (
-              <tr><td colSpan={6} className="text-tenue">Todavía no hay bloques.</td></tr>
+              <tr><td colSpan={6} className="text-tenue">Sin bloques.</td></tr>
             )}
             {bloques.map((b) => {
               const alterado = b.indice === invalido;
@@ -111,7 +109,6 @@ export default function Auditoria({ sesion }) {
           </tbody>
         </table>
       </Panel>
-      <p className="text-xs text-tenue">Se muestran los últimos 50 bloques. Pasá el mouse sobre un hash para verlo completo.</p>
     </Seccion>
   );
 }

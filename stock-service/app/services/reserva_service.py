@@ -29,8 +29,6 @@ def a_salida(reserva: Reserva) -> ReservaOut:
 
 
 class ReservaService:
-    """Transacción ACID local sobre el stock (TP3 ADR-06) y compensación (ADR-09)."""
-
     def __init__(self, session: Session):
         self.session = session
         self.articulos = ArticuloDao(session)
@@ -39,8 +37,8 @@ class ReservaService:
     def _limitar_espera(self) -> None:
         self.session.execute(text(f"SET LOCAL lock_timeout = '{LOCK_TIMEOUT_SECONDS}s'"))
 
+    # reservarStock: transacción ACID
     def reservar(self, datos: ReservaIn) -> tuple[ReservaOut, bool]:
-        """Descuenta el stock del pedido completo o no descuenta nada. Devuelve (reserva, creada)."""
         cantidades: dict[int, int] = {}
         for item in datos.items:
             cantidades[item.articulo_id] = cantidades.get(item.articulo_id, 0) + item.cantidad
@@ -49,7 +47,7 @@ class ReservaService:
             with self.session.begin():
                 self._limitar_espera()
 
-                # Idempotencia: si Pedidos reintenta, no se descuenta dos veces
+                # Idempotencia
                 existente = self.reservas.obtener(datos.id_pedido)
                 if existente:
                     return a_salida(existente), False
@@ -73,7 +71,6 @@ class ReservaService:
                     )
                 self.reservas.agregar(reserva)
         except IntegrityError:
-            # Dos reintentos simultáneos del mismo pedido: gana el primero, el segundo devuelve esa reserva
             self.session.rollback()
             existente = self.reservas.obtener(datos.id_pedido)
             if existente:
@@ -87,8 +84,8 @@ class ReservaService:
         log("info", "stock reservado", id_pedido=datos.id_pedido, items=cantidades)
         return a_salida(reserva), True
 
+    # liberarStock: compensación
     def liberar(self, id_pedido: str) -> ReservaOut:
-        """Compensación (ADR-09): restituye el stock de una reserva. Idempotente."""
         with self.session.begin():
             self._limitar_espera()
             reserva = self.reservas.obtener(id_pedido, bloquear=True)

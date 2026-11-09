@@ -1,5 +1,5 @@
 . "$PSScriptRoot\comun.ps1"
-Titulo "2. Acceso sin token o con token inválido (API Gateway, TP3 §5)"
+Titulo "2. Acceso sin token o con token inválido (API Gateway)"
 $tokenCliente = TokenCliente
 
 $r = Llamar GET "/pedidos"
@@ -8,7 +8,7 @@ Verificar "Sin token -> 401" ($r.Status -eq 401) "-> $($r.Status)"
 $r = Llamar GET "/pedidos" -Token ($tokenCliente + "x")
 Verificar "Token alterado (firma inválida) -> 401" ($r.Status -eq 401) "-> $($r.Status)"
 
-# Token falsificado: se cambia el rol a ADMIN y se declara 'sin firma' (alg: none)
+# Token falsificado: rol ADMIN + alg none
 $partes = $tokenCliente.Split(".")
 $datos = DecodificarBase64Url $partes[1] | ConvertFrom-Json
 $datos.rol = "ADMIN"

@@ -1,4 +1,4 @@
-// Único punto de contacto con el backend: todo pasa por el API Gateway (TP3 §3)
+// Todo pasa por el API Gateway
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
 
 export class ErrorApi extends Error {
@@ -28,13 +28,11 @@ export async function llamar(metodo, ruta, { cuerpo, token } = {}) {
       body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
     });
   } catch {
-    // El Gateway no responde (TP3 §3: "servicio no disponible en este momento")
     avisar("servicio-no-disponible", "No se pudo conectar con el sistema.");
     throw new ErrorApi(0, "SIN_CONEXION", "No se pudo conectar con el sistema");
   }
 
   const datos = await respuesta.json().catch(() => null);
-  // ID que genera el Gateway para seguir la solicitud en los logs de todos los servicios
   const correlacion = respuesta.headers.get("X-Correlation-ID");
 
   if (respuesta.status === 503) {

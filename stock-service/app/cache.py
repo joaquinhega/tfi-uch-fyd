@@ -2,14 +2,8 @@ import threading
 import time
 
 
+# Caché con TTL
 class CacheCatalogo:
-    """Caché en memoria del catálogo (TP2 ADR-03).
-
-    Evita ir a PostgreSQL en cada lectura del catálogo. Se invalida por vencimiento (TTL)
-    o cuando el administrador cambia stock o precio. Hay una sola instancia del servicio,
-    así que no hay copias inconsistentes entre instancias.
-    """
-
     def __init__(self, ttl_segundos: int):
         self.ttl = ttl_segundos
         self._datos = None

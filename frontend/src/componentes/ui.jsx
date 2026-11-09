@@ -1,5 +1,3 @@
-// Componentes visuales básicos, compartidos por todas las pantallas
-
 export function Boton({ variante = "primario", className = "", ...props }) {
   const estilos = {
     primario: "bg-acento px-4 py-2 text-white hover:bg-acento/90",
@@ -14,7 +12,7 @@ export function Boton({ variante = "primario", className = "", ...props }) {
   );
 }
 
-export function Campo({ etiqueta, ayuda, ...props }) {
+export function Campo({ etiqueta, ...props }) {
   return (
     <label className="block text-sm">
       <span className="font-medium">{etiqueta}</span>
@@ -22,7 +20,6 @@ export function Campo({ etiqueta, ayuda, ...props }) {
         className="mt-1.5 w-full rounded-md border border-linea bg-superficie px-3 py-2 outline-none focus:border-acento focus:ring-2 focus:ring-acento/20"
         {...props}
       />
-      {ayuda && <span className="mt-1 block text-xs text-tenue">{ayuda}</span>}
     </label>
   );
 }
@@ -43,15 +40,11 @@ export function Mensaje({ tipo = "error", children }) {
   );
 }
 
-// Encabezado de cada pantalla: título, para qué sirve y acciones a la derecha
-export function Seccion({ titulo, descripcion, acciones, children }) {
+export function Seccion({ titulo, acciones, children }) {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">{titulo}</h2>
-          {descripcion && <p className="mt-1 max-w-prose text-sm text-tenue">{descripcion}</p>}
-        </div>
+        <h2 className="text-xl font-semibold tracking-tight">{titulo}</h2>
         {acciones && <div className="flex gap-2">{acciones}</div>}
       </div>
       {children}

@@ -4,8 +4,8 @@ import json
 HASH_GENESIS = "0" * 64
 
 
+# Blockchain: SHA-256 del bloque + hash anterior
 def calcular_hash(indice: int, ts: str, tipo: str, servicio: str, datos: dict, hash_anterior: str) -> str:
-    """SHA-256 del contenido del bloque más el hash del anterior: cambiar cualquier dato cambia el hash."""
     contenido = {"indice": indice, "ts": ts, "tipo": tipo, "servicio": servicio, "datos": datos, "hash_anterior": hash_anterior}
     texto = json.dumps(contenido, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(texto.encode("utf-8")).hexdigest()
@@ -16,7 +16,6 @@ def _invalida(indice: int, motivo: str) -> dict:
 
 
 def verificar_cadena(bloques: list) -> dict:
-    """Recorre la cadena desde el génesis y devuelve el primer bloque que no cierra."""
     anterior = None
     for b in bloques:
         if anterior is None:

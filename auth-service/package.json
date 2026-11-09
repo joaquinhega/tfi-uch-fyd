@@ -1,7 +1,6 @@
 {
   "name": "auth-service",
   "version": "1.0.0",
-  "description": "Servicio de Autenticación UCH-FyD (token issuer)",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

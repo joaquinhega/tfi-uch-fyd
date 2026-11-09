@@ -1,14 +1,13 @@
 import httpx
 
 from app.config import AUDITORIA_URL
-from app.contexto import correlation_id
-from app.logger import log
+from app.logger import correlation_id, log
 
 _http = httpx.Client(base_url=AUDITORIA_URL, timeout=httpx.Timeout(3.0, connect=2.0))
 
 
+# Blockchain: si Auditoría falla, el pedido sigue
 def registrar_evento(tipo: str, datos: dict) -> None:
-    """Envía un evento a la cadena de auditoría. Si falla, la operación sigue (igual que Log Aggregation)."""
     try:
         respuesta = _http.post(
             "/v1/eventos",

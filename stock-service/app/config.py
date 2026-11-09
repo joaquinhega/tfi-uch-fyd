@@ -21,5 +21,4 @@ DATABASE_URL = URL.create(
 
 CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "30"))
 
-# Tiempo máximo que una reserva espera el bloqueo de fila antes de abandonar
 LOCK_TIMEOUT_SECONDS = int(os.getenv("LOCK_TIMEOUT_SECONDS", "30"))

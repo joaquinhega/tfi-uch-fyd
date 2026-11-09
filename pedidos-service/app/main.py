@@ -6,12 +6,11 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app import models  # noqa: F401  (registra las tablas antes de crearlas)
+from app import models  # noqa: F401
 from app.cliente_stock import circuito_stock
-from app.contexto import correlation_id
 from app.db import Base, engine
 from app.errores import ErrorNegocio
-from app.logger import log
+from app.logger import correlation_id, log
 from app.routes import pedidos
 
 

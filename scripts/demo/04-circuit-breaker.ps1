@@ -1,5 +1,5 @@
 . "$PSScriptRoot\comun.ps1"
-Titulo "4. Circuit Breaker con Stock caído (TP3 §3)"
+Titulo "4. Circuit Breaker con Stock caído"
 $fallos = [int]$Cfg.CB_FAIL_MAX
 $espera = [int]$Cfg.CB_RESET_TIMEOUT_SECONDS
 
@@ -31,7 +31,7 @@ Paso "Esperando $($espera + 1) s para que el circuito pase a SEMIABIERTO..."
 Start-Sleep -Seconds ($espera + 1)
 $r = Llamar GET "/stock/catalogo"
 Verificar "Con Stock de vuelta, la llamada de prueba funciona (200)" ($r.Status -eq 200) "-> $($r.Status)"
-$salud = Invoke-RestMethod "http://localhost:8080/health"
+$salud = Invoke-RestMethod "http://127.0.0.1:8080/health"
 Verificar "El circuito de Stock vuelve a CERRADO" ($salud.circuitos.stock -eq "CERRADO") "-> $($salud.circuitos.stock)"
 
 Resultado

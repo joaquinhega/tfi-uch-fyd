@@ -1,5 +1,3 @@
-// El token se guarda en sessionStorage: se borra al cerrar la pestaña.
-// Su contenido se lee solo para mostrar nombre y rol; la validación real la hace el Gateway.
 const CLAVE = "uchfyd_token";
 
 function leerPayload(token) {

@@ -5,7 +5,7 @@ from app.db import get_session
 from app.schemas import ErrorOut, ReservaIn, ReservaOut
 from app.services.reserva_service import ReservaService
 
-# Operaciones INTERNAS: solo las invoca Pedidos por la red interna. El Gateway no las publica (TP3 §2.2).
+# Rutas internas: solo Pedidos
 router = APIRouter(prefix="/v1", tags=["Reservas (internas)"])
 
 
@@ -17,7 +17,6 @@ router = APIRouter(prefix="/v1", tags=["Reservas (internas)"])
     responses={404: {"model": ErrorOut}, 409: {"model": ErrorOut}, 503: {"model": ErrorOut}},
 )
 def reservar_stock(datos: ReservaIn, response: Response, session: Session = Depends(get_session)):
-    """Descuenta atómicamente el stock del pedido completo. 201 si se creó, 200 si ya existía (reintento)."""
     reserva, creada = ReservaService(session).reservar(datos)
     if not creada:
         response.status_code = 200
@@ -31,5 +30,4 @@ def reservar_stock(datos: ReservaIn, response: Response, session: Session = Depe
     responses={404: {"model": ErrorOut}, 503: {"model": ErrorOut}},
 )
 def liberar_stock(id_pedido: str, session: Session = Depends(get_session)):
-    """Compensación: restituye el stock reservado. Idempotente."""
     return ReservaService(session).liberar(id_pedido)

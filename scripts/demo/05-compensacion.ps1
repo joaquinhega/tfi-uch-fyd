@@ -1,5 +1,5 @@
 . "$PSScriptRoot\comun.ps1"
-Titulo "5. Compensación ante un fallo después de reservar (ADR-09)"
+Titulo "5. Compensación ante un fallo después de reservar (liberarStock)"
 
 function CambiarFalla([string]$Valor) {
   (Get-Content .env) -replace '^FAULT_AFTER_RESERVE=.*', "FAULT_AFTER_RESERVE=$Valor" | Set-Content .env
