@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { llamar } from "../api.js";
 import { formatoFecha, formatoMoneda, textoMotivo } from "../formato.js";
-import { Boton, Mensaje } from "../componentes/ui.jsx";
+import { Boton, Mensaje, Panel, Seccion } from "../componentes/ui.jsx";
 import EstadoPedido from "../componentes/EstadoPedido.jsx";
 
 const ESPERANDO = ["EN_ESPERA", "PENDIENTE"];
@@ -40,58 +40,60 @@ export default function Pedidos({ sesion }) {
     return () => clearTimeout(temporizador);
   }, [pedidos, cargar]);
 
-  if (cargando) return <p className="text-slate-500">Cargando pedidos...</p>;
+  if (cargando) return <p className="text-tenue">Cargando pedidos...</p>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{esAdmin ? "Todos los pedidos" : "Mis pedidos"}</h2>
-        <Boton variante="secundario" onClick={cargar}>Actualizar</Boton>
-      </div>
-
+    <Seccion
+      titulo={esAdmin ? "Todos los pedidos" : "Mis pedidos"}
+      descripcion={esAdmin ? "Como administrador ves los pedidos de todos los clientes." : "Solo ves los pedidos hechos con tu cuenta."}
+      acciones={<Boton variante="secundario" onClick={cargar}>Actualizar</Boton>}
+    >
       <Mensaje>{error}</Mensaje>
-      {pedidos.length === 0 && !error && <p className="text-slate-500">Todavía no hay pedidos.</p>}
+      {pedidos.length === 0 && !error && (
+        <Panel className="p-8 text-center text-sm text-tenue">Todavía no hay pedidos. Hacé el primero desde el catálogo.</Panel>
+      )}
 
       {pedidos.length > 0 && (
-        <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-100 text-left text-slate-600">
+        <Panel>
+          <table className="tabla">
+            <thead>
               <tr>
-                <th className="px-3 py-2">N°</th>
-                <th className="px-3 py-2">Fecha</th>
-                <th className="px-3 py-2">Cliente</th>
-                {esAdmin && <th className="px-3 py-2">Usuario</th>}
-                <th className="px-3 py-2">Detalle</th>
-                <th className="px-3 py-2 text-right">Total</th>
-                <th className="px-3 py-2">Estado</th>
+                <th>N°</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Detalle</th>
+                <th className="text-right">Total</th>
+                <th>Estado</th>
               </tr>
             </thead>
             <tbody>
               {pedidos.map((p) => (
-                <tr key={p.id} className="border-t border-slate-100 align-top">
-                  <td className="px-3 py-2">{p.numero}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">{formatoFecha(p.fecha)}</td>
-                  <td className="px-3 py-2">{p.nombre_cliente}</td>
-                  {esAdmin && <td className="px-3 py-2 text-slate-500">{p.usuario_email}</td>}
-                  <td className="px-3 py-2">
+                <tr key={p.id} className="align-top">
+                  <td className="font-medium">{p.numero}</td>
+                  <td className="whitespace-nowrap text-tenue">{formatoFecha(p.fecha)}</td>
+                  <td>
+                    {p.nombre_cliente}
+                    {esAdmin && <div className="text-xs text-tenue">{p.usuario_email}</div>}
+                  </td>
+                  <td>
                     {p.items.map((i) => (
                       <div key={i.articulo_id}>
                         {i.cantidad} × {nombres[i.articulo_id] ?? `Artículo ${i.articulo_id}`}
-                        {i.precio_unitario && <span className="text-slate-500"> ({formatoMoneda(i.precio_unitario)})</span>}
+                        {i.precio_unitario && <span className="text-tenue"> a {formatoMoneda(i.precio_unitario)}</span>}
                       </div>
                     ))}
                   </td>
-                  <td className="px-3 py-2 text-right">{formatoMoneda(p.total)}</td>
-                  <td className="px-3 py-2">
+                  <td className="whitespace-nowrap text-right">{formatoMoneda(p.total)}</td>
+                  <td>
                     <EstadoPedido estado={p.estado} />
-                    {p.motivo && <div className="mt-1 text-xs text-slate-500">{textoMotivo(p.motivo, p.detalle)}</div>}
+                    {p.motivo && <div className="mt-1 max-w-48 text-xs text-tenue">{textoMotivo(p.motivo, p.detalle)}</div>}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Panel>
       )}
-    </div>
+    </Seccion>
   );
 }

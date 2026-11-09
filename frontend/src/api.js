@@ -2,11 +2,12 @@
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
 
 export class ErrorApi extends Error {
-  constructor(status, codigo, mensaje, datos) {
+  constructor(status, codigo, mensaje, datos, correlacion) {
     super(mensaje);
     this.status = status;
     this.codigo = codigo;
     this.datos = datos;
+    this.correlacion = correlacion;
   }
 }
 
@@ -33,6 +34,8 @@ export async function llamar(metodo, ruta, { cuerpo, token } = {}) {
   }
 
   const datos = await respuesta.json().catch(() => null);
+  // ID que genera el Gateway para seguir la solicitud en los logs de todos los servicios
+  const correlacion = respuesta.headers.get("X-Correlation-ID");
 
   if (respuesta.status === 503) {
     avisar("servicio-no-disponible", datos?.mensaje ?? datos?.detalle ?? "");
@@ -41,7 +44,7 @@ export async function llamar(metodo, ruta, { cuerpo, token } = {}) {
     avisar("sesion-vencida");
   }
   if (!respuesta.ok) {
-    throw new ErrorApi(respuesta.status, datos?.codigo ?? datos?.motivo ?? "ERROR", datos?.mensaje ?? datos?.detalle ?? `Error ${respuesta.status}`, datos);
+    throw new ErrorApi(respuesta.status, datos?.codigo ?? datos?.motivo ?? "ERROR", datos?.mensaje ?? datos?.detalle ?? `Error ${respuesta.status}`, datos, correlacion);
   }
-  return { status: respuesta.status, datos };
+  return { status: respuesta.status, datos, correlacion };
 }

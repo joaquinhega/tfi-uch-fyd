@@ -1,14 +1,16 @@
-const ESTILOS = {
-  ACEPTADO: "bg-green-100 text-green-800",
-  RECHAZADO: "bg-red-100 text-red-800",
-  EN_ESPERA: "bg-amber-100 text-amber-800",
-  PENDIENTE: "bg-slate-100 text-slate-700",
+const ESTADOS = {
+  ACEPTADO: { texto: "Aceptado", estilo: "bg-ok-suave text-ok" },
+  RECHAZADO: { texto: "Rechazado", estilo: "bg-error-suave text-error" },
+  EN_ESPERA: { texto: "En espera", estilo: "bg-espera-suave text-espera" },
+  PENDIENTE: { texto: "Pendiente", estilo: "bg-fondo text-tenue" },
 };
 
 export default function EstadoPedido({ estado }) {
+  const { texto, estilo } = ESTADOS[estado] ?? ESTADOS.PENDIENTE;
   return (
-    <span className={`rounded px-2 py-0.5 text-xs font-medium ${ESTILOS[estado] ?? ESTILOS.PENDIENTE}`}>
-      {estado.replace("_", " ")}
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${estilo}`}>
+      <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+      {texto}
     </span>
   );
 }

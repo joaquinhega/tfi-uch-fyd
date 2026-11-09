@@ -3,8 +3,15 @@ import { llamar } from "../api.js";
 import { guardarToken } from "../sesion.js";
 import { Boton, Campo, Mensaje } from "../componentes/ui.jsx";
 
-function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
+// Usuarios que carga el seed de Autenticación (la contraseña está en el .env)
+const USUARIOS_PRUEBA = [
+  { email: "admin@uchfyd.com", rol: "Administrador", resultado: "Ve todo: catálogo, pedidos de todos, cuentas y auditoría." },
+  { email: "cliente@uchfyd.com", rol: "Cliente", resultado: "Ve el catálogo y solo sus propios pedidos." },
+  { email: "inactivo@uchfyd.com", rol: "Cuenta sin activar", resultado: "El ingreso se rechaza hasta que un administrador la active." },
+];
+
+function Login({ emailInicial, onLogin }) {
+  const [email, setEmail] = useState(emailInicial);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -25,9 +32,9 @@ function Login({ onLogin }) {
   }
 
   return (
-    <form onSubmit={enviar} className="space-y-3">
+    <form onSubmit={enviar} className="space-y-4">
       <Campo etiqueta="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <Campo etiqueta="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      <Campo etiqueta="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus={Boolean(emailInicial)} required />
       <Mensaje>{error}</Mensaje>
       <Boton type="submit" disabled={cargando} className="w-full">{cargando ? "Ingresando..." : "Ingresar"}</Boton>
     </form>
@@ -56,12 +63,12 @@ function Registro({ onRegistrado }) {
   }
 
   return (
-    <form onSubmit={enviar} className="space-y-3">
+    <form onSubmit={enviar} className="space-y-4">
       <Campo etiqueta="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
       <Campo etiqueta="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <Campo etiqueta="Contraseña (mínimo 8 caracteres)" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required />
+      <Campo etiqueta="Contraseña" ayuda="Mínimo 8 caracteres." type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required />
       <Mensaje>{error}</Mensaje>
-      <Boton type="submit" disabled={cargando} className="w-full">{cargando ? "Registrando..." : "Crear cuenta"}</Boton>
+      <Boton type="submit" disabled={cargando} className="w-full">{cargando ? "Creando cuenta..." : "Crear cuenta"}</Boton>
     </form>
   );
 }
@@ -69,25 +76,59 @@ function Registro({ onRegistrado }) {
 export default function Acceso({ onLogin }) {
   const [modo, setModo] = useState("login");
   const [aviso, setAviso] = useState("");
+  const [emailElegido, setEmailElegido] = useState("");
+
+  function elegir(email) {
+    setModo("login");
+    setAviso("");
+    setEmailElegido(email);
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-1 text-xl font-semibold text-slate-800">UCH-FyD</h1>
-        <p className="mb-4 text-sm text-slate-500">{modo === "login" ? "Iniciá sesión para hacer pedidos" : "Creá tu cuenta"}</p>
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="grid w-full max-w-4xl overflow-hidden rounded-lg border border-linea bg-superficie md:grid-cols-2">
+        <div className="p-8">
+          <h1 className="text-2xl font-semibold tracking-tight">Tienda</h1>
+          <p className="mt-1 text-sm text-tenue">{modo === "login" ? "Ingresá para ver el catálogo y hacer pedidos." : "Creá tu cuenta. Un administrador tiene que activarla."}</p>
 
-        {aviso && <div className="mb-3"><Mensaje tipo="ok">{aviso}</Mensaje></div>}
+          <div className="mt-6 space-y-4">
+            {aviso && <Mensaje tipo="ok">{aviso}</Mensaje>}
+            {modo === "login"
+              ? <Login key={emailElegido} emailInicial={emailElegido} onLogin={onLogin} />
+              : <Registro onRegistrado={() => { setModo("login"); setAviso("Cuenta creada. Podrás ingresar cuando un administrador la active."); }} />}
+          </div>
 
-        {modo === "login"
-          ? <Login onLogin={onLogin} />
-          : <Registro onRegistrado={() => { setModo("login"); setAviso("Cuenta creada. Un administrador debe activarla antes de que puedas ingresar."); }} />}
+          <p className="mt-6 text-center text-sm text-tenue">
+            {modo === "login" ? "¿No tenés cuenta? " : "¿Ya tenés cuenta? "}
+            <Boton variante="texto" onClick={() => { setModo(modo === "login" ? "registro" : "login"); setAviso(""); }}>
+              {modo === "login" ? "Registrate" : "Ingresá"}
+            </Boton>
+          </p>
+        </div>
 
-        <button
-          className="mt-4 w-full text-center text-sm text-slate-600 underline"
-          onClick={() => { setModo(modo === "login" ? "registro" : "login"); setAviso(""); }}
-        >
-          {modo === "login" ? "¿No tenés cuenta? Registrate" : "¿Ya tenés cuenta? Iniciá sesión"}
-        </button>
+        <div className="border-t border-linea bg-fondo/60 p-8 md:border-l md:border-t-0">
+          <h2 className="font-semibold">Usuarios de prueba</h2>
+          <p className="mt-1 text-sm text-tenue">Elegí uno para completar el email.</p>
+          <ul className="mt-5 space-y-2">
+            {USUARIOS_PRUEBA.map((u) => (
+              <li key={u.email}>
+                <button
+                  onClick={() => elegir(u.email)}
+                  className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-colors ${emailElegido === u.email ? "border-acento bg-superficie" : "border-linea bg-superficie hover:border-tenue/40"}`}
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="font-medium">{u.rol}</span>
+                    <span className="font-mono text-xs text-tenue">{u.email}</span>
+                  </span>
+                  <span className="mt-1 block text-tenue">{u.resultado}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-sm leading-6 text-tenue">
+            Al ingresar, Autenticación firma un token con su clave privada (RS256). El Gateway lo valida con la clave pública en cada operación y rechaza los que faltan, vencieron o fueron alterados.
+          </p>
+        </div>
       </div>
     </div>
   );

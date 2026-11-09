@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { llamar } from "../api.js";
 import { formatoMoneda } from "../formato.js";
-import { Boton, Mensaje } from "../componentes/ui.jsx";
+import { Boton, Mensaje, Panel, Seccion } from "../componentes/ui.jsx";
+
+const ESTADOS_CUENTA = { ACTIVO: "Activa", INACTIVO: "Sin activar" };
+const ROLES = { ADMIN: "Administrador", CLIENTE: "Cliente" };
+const entrada = "rounded-md border border-linea bg-superficie px-2 py-1.5 text-right outline-none focus:border-acento focus:ring-2 focus:ring-acento/20";
 
 // RF-02: activación de cuentas
 function Cuentas({ sesion }) {
@@ -33,40 +37,42 @@ function Cuentas({ sesion }) {
   }
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Cuentas</h2>
-        <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="rounded border border-slate-300 bg-white px-2 py-1 text-sm">
-          <option value="INACTIVO">Inactivas</option>
+    <Seccion
+      titulo="Cuentas"
+      descripcion="Las cuentas nuevas no pueden ingresar hasta que las actives."
+      acciones={
+        <select aria-label="Filtrar cuentas" value={filtro} onChange={(e) => setFiltro(e.target.value)} className="rounded-md border border-linea bg-superficie px-3 py-2 text-sm">
+          <option value="INACTIVO">Sin activar</option>
           <option value="ACTIVO">Activas</option>
           <option value="">Todas</option>
         </select>
-      </div>
+      }
+    >
       {mensaje && <Mensaje tipo={mensaje.tipo}>{mensaje.texto}</Mensaje>}
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-100 text-left text-slate-600">
+      <Panel>
+        <table className="tabla">
+          <thead>
             <tr>
-              <th className="px-3 py-2">Nombre</th>
-              <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">Rol</th>
-              <th className="px-3 py-2">Estado</th>
-              <th className="px-3 py-2" />
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {usuarios.length === 0 && (
-              <tr><td colSpan={5} className="px-3 py-3 text-slate-500">No hay cuentas con ese estado.</td></tr>
+              <tr><td colSpan={5} className="text-tenue">No hay cuentas con ese estado.</td></tr>
             )}
             {usuarios.map((u) => (
-              <tr key={u.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{u.nombre}</td>
-                <td className="px-3 py-2">{u.email}</td>
-                <td className="px-3 py-2">{u.rol}</td>
-                <td className="px-3 py-2">{u.estado}</td>
-                <td className="px-3 py-2 text-right">
+              <tr key={u.id}>
+                <td className="font-medium">{u.nombre}</td>
+                <td className="text-tenue">{u.email}</td>
+                <td>{ROLES[u.rol] ?? u.rol}</td>
+                <td className={u.estado === "ACTIVO" ? "text-ok" : "text-espera"}>{ESTADOS_CUENTA[u.estado] ?? u.estado}</td>
+                <td className="text-right">
                   {u.id === sesion.id ? (
-                    <span className="text-xs text-slate-400">(vos)</span>
+                    <span className="text-xs text-tenue">Tu cuenta</span>
                   ) : u.estado === "INACTIVO" ? (
                     <Boton onClick={() => cambiarEstado(u, "activar")}>Activar</Boton>
                   ) : (
@@ -77,8 +83,8 @@ function Cuentas({ sesion }) {
             ))}
           </tbody>
         </table>
-      </div>
-    </section>
+      </Panel>
+    </Seccion>
   );
 }
 
@@ -113,7 +119,7 @@ function Articulos({ sesion }) {
     setMensaje(null);
     try {
       await llamar("PUT", `/stock/articulos/${articulo.id}`, { token: sesion.token, cuerpo });
-      setMensaje({ tipo: "ok", texto: `${articulo.nombre} actualizado.` });
+      setMensaje({ tipo: "ok", texto: `${articulo.nombre} guardado. El catálogo ya muestra el valor nuevo.` });
       cargar();
     } catch (e) {
       if (e.status !== 0) setMensaje({ tipo: "error", texto: e.message });
@@ -121,48 +127,47 @@ function Articulos({ sesion }) {
   }
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold">Artículos</h2>
+    <Seccion titulo="Stock y precios" descripcion="Completá solo lo que quieras cambiar. Al guardar se actualiza la caché del catálogo.">
       {mensaje && <Mensaje tipo={mensaje.tipo}>{mensaje.texto}</Mensaje>}
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-100 text-left text-slate-600">
+      <Panel>
+        <table className="tabla">
+          <thead>
             <tr>
-              <th className="px-3 py-2">Artículo</th>
-              <th className="px-3 py-2 text-right">Precio actual</th>
-              <th className="px-3 py-2 text-right">Nuevo precio</th>
-              <th className="px-3 py-2 text-right">Stock actual</th>
-              <th className="px-3 py-2 text-right">Nuevo stock</th>
-              <th className="px-3 py-2" />
+              <th>Artículo</th>
+              <th className="text-right">Precio</th>
+              <th className="text-right">Nuevo precio</th>
+              <th className="text-right">Stock</th>
+              <th className="text-right">Nuevo stock</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {articulos.map((a) => (
-              <tr key={a.id} className="border-t border-slate-100">
-                <td className="px-3 py-2">{a.nombre}</td>
-                <td className="px-3 py-2 text-right">{formatoMoneda(a.precio)}</td>
-                <td className="px-3 py-2 text-right">
-                  <input type="number" min="0.01" step="0.01" value={cambios[a.id]?.precio ?? ""} onChange={(e) => editar(a.id, "precio", e.target.value)} className="w-28 rounded border border-slate-300 px-2 py-1 text-right" />
+              <tr key={a.id}>
+                <td className="font-medium">{a.nombre}</td>
+                <td className="whitespace-nowrap text-right text-tenue">{formatoMoneda(a.precio)}</td>
+                <td className="text-right">
+                  <input type="number" min="0.01" step="0.01" aria-label={`Nuevo precio de ${a.nombre}`} value={cambios[a.id]?.precio ?? ""} onChange={(e) => editar(a.id, "precio", e.target.value)} className={`w-28 ${entrada}`} />
                 </td>
-                <td className="px-3 py-2 text-right">{a.stock}</td>
-                <td className="px-3 py-2 text-right">
-                  <input type="number" min="0" value={cambios[a.id]?.stock ?? ""} onChange={(e) => editar(a.id, "stock", e.target.value)} className="w-20 rounded border border-slate-300 px-2 py-1 text-right" />
+                <td className="text-right text-tenue">{a.stock}</td>
+                <td className="text-right">
+                  <input type="number" min="0" aria-label={`Nuevo stock de ${a.nombre}`} value={cambios[a.id]?.stock ?? ""} onChange={(e) => editar(a.id, "stock", e.target.value)} className={`w-20 ${entrada}`} />
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="text-right">
                   <Boton onClick={() => guardar(a)} disabled={!cambios[a.id]}>Guardar</Boton>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-    </section>
+      </Panel>
+    </Seccion>
   );
 }
 
 export default function Admin({ sesion }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <Cuentas sesion={sesion} />
       <Articulos sesion={sesion} />
     </div>

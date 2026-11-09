@@ -1,31 +1,68 @@
+// Componentes visuales básicos, compartidos por todas las pantallas
+
 export function Boton({ variante = "primario", className = "", ...props }) {
   const estilos = {
-    primario: "bg-slate-800 text-white hover:bg-slate-700",
-    secundario: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100",
+    primario: "bg-acento px-4 py-2 text-white hover:bg-acento/90",
+    secundario: "border border-linea bg-superficie px-4 py-2 text-tinta hover:bg-fondo",
+    texto: "px-1 py-1 text-acento hover:underline",
   };
   return (
     <button
-      className={`rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${estilos[variante]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${estilos[variante]} ${className}`}
       {...props}
     />
   );
 }
 
-export function Campo({ etiqueta, ...props }) {
+export function Campo({ etiqueta, ayuda, ...props }) {
   return (
     <label className="block text-sm">
-      <span className="text-slate-600">{etiqueta}</span>
-      <input className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-400" {...props} />
+      <span className="font-medium">{etiqueta}</span>
+      <input
+        className="mt-1.5 w-full rounded-md border border-linea bg-superficie px-3 py-2 outline-none focus:border-acento focus:ring-2 focus:ring-acento/20"
+        {...props}
+      />
+      {ayuda && <span className="mt-1 block text-xs text-tenue">{ayuda}</span>}
     </label>
   );
 }
 
+const TONOS = {
+  error: "border-error bg-error-suave text-error",
+  ok: "border-ok bg-ok-suave text-ok",
+  espera: "border-espera bg-espera-suave text-espera",
+  info: "border-acento bg-acento-suave text-acento",
+};
+
 export function Mensaje({ tipo = "error", children }) {
   if (!children) return null;
-  const estilos = {
-    error: "bg-red-50 text-red-800 border-red-200",
-    ok: "bg-green-50 text-green-800 border-green-200",
-    info: "bg-blue-50 text-blue-800 border-blue-200",
-  };
-  return <p className={`rounded border px-3 py-2 text-sm ${estilos[tipo]}`}>{children}</p>;
+  return (
+    <div role={tipo === "error" ? "alert" : "status"} className={`rounded-md border-l-4 px-4 py-3 text-sm ${TONOS[tipo]}`}>
+      {children}
+    </div>
+  );
+}
+
+// Encabezado de cada pantalla: título, para qué sirve y acciones a la derecha
+export function Seccion({ titulo, descripcion, acciones, children }) {
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">{titulo}</h2>
+          {descripcion && <p className="mt-1 max-w-prose text-sm text-tenue">{descripcion}</p>}
+        </div>
+        {acciones && <div className="flex gap-2">{acciones}</div>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+export function Panel({ className = "", children }) {
+  return <div className={`overflow-x-auto rounded-lg border border-linea bg-superficie ${className}`}>{children}</div>;
+}
+
+export function Codigo({ children }) {
+  return <code className="rounded bg-fondo px-1.5 py-0.5 font-mono text-[0.8em] text-tinta">{children}</code>;
 }

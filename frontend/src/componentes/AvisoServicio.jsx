@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// Aviso de "servicio no disponible" (TP3 §3 y vista lógica): aparece ante un 503 o si el Gateway no responde
+// Aviso de "servicio no disponible" (TP3 §3): aparece ante un 503 o si el Gateway no responde
 export default function AvisoServicio() {
   const [mensaje, setMensaje] = useState(null);
 
@@ -20,8 +20,8 @@ export default function AvisoServicio() {
 
   if (mensaje === null) return null;
   return (
-    <div role="alert" className="border-b border-amber-300 bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">
-      Servicio no disponible en este momento. {mensaje}
+    <div role="alert" className="sticky top-0 z-20 border-b border-espera/30 bg-espera-suave px-4 py-2.5 text-center text-sm text-espera">
+      <strong className="font-semibold">Servicio no disponible en este momento.</strong> {mensaje}
     </div>
   );
 }
