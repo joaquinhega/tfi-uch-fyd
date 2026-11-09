@@ -23,6 +23,10 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: ${FRONTEND_API_URL}
+        VITE_NEGOCIO: ${NEGOCIO_NOMBRE}
+        VITE_MONEDA: ${MONEDA}
+        VITE_LOCALE: ${LOCALE}
+        VITE_MODO: ${MODO}
     ports:
       - "${FRONTEND_PORT}:80"
     networks: [edge]

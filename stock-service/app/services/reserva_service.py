@@ -54,7 +54,7 @@ class ReservaService:
 
                 articulos = {a.id: a for a in self.articulos.bloquear(sorted(cantidades))}
 
-                faltantes = [i for i in cantidades if i not in articulos]
+                faltantes = [i for i in cantidades if i not in articulos or not articulos[i].activo]
                 if faltantes:
                     raise ErrorNegocio(404, "ARTICULO_NO_ENCONTRADO", f"No existen los artículos {faltantes}")
 

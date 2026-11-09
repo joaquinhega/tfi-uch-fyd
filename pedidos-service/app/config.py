@@ -24,8 +24,11 @@ AUDITORIA_URL = os.getenv("AUDITORIA_URL", "http://auditoria-service:8000")
 STOCK_HTTP_TIMEOUT_SECONDS = float(os.getenv("STOCK_HTTP_TIMEOUT_SECONDS", "35"))
 
 RESERVA_TIMEOUT_SECONDS = float(os.getenv("RESERVA_TIMEOUT_SECONDS", "2"))
+REINTENTO_SEGUNDOS = float(os.getenv("REINTENTO_SEGUNDOS", "30"))
 
 CB_FAIL_MAX = int(os.getenv("CB_FAIL_MAX", "3"))
 CB_RESET_TIMEOUT_SECONDS = float(os.getenv("CB_RESET_TIMEOUT_SECONDS", "15"))
 
-FAULT_AFTER_RESERVE = os.getenv("FAULT_AFTER_RESERVE", "false").lower() == "true"
+MODO_DEMO = os.getenv("MODO", "produccion") == "demo"
+# Inyección de fallo: solo en modo demo
+FAULT_AFTER_RESERVE = MODO_DEMO and os.getenv("FAULT_AFTER_RESERVE", "false").lower() == "true"

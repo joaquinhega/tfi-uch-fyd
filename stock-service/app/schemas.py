@@ -11,16 +11,26 @@ class ArticuloOut(BaseModel):
     nombre: str
     stock: int
     precio: Decimal
+    activo: bool
+
+
+class ArticuloIn(BaseModel):
+    codigo: str = Field(min_length=1, max_length=20)
+    nombre: str = Field(min_length=1, max_length=120)
+    stock: int = Field(ge=0)
+    precio: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
 
 
 class ArticuloUpdateIn(BaseModel):
+    nombre: str | None = Field(default=None, min_length=1, max_length=120)
     stock: int | None = Field(default=None, ge=0)
     precio: Decimal | None = Field(default=None, gt=0, max_digits=12, decimal_places=2)
+    activo: bool | None = None
 
     @model_validator(mode="after")
     def al_menos_un_campo(self):
-        if self.stock is None and self.precio is None:
-            raise ValueError("Indicar stock, precio o ambos")
+        if all(v is None for v in (self.nombre, self.stock, self.precio, self.activo)):
+            raise ValueError("Indicar al menos un campo")
         return self
 
 

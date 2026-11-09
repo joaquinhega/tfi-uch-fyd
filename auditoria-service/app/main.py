@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app import models  # noqa: F401
 from app.db import Base, SessionLocal, engine
-from app.errores import ErrorNegocio
+from app.errores import ErrorNegocio, contrato_con_400
 from app.logger import correlation_id, log
 from app.routes import auditoria
 from app.services.auditoria_service import AuditoriaService
@@ -57,3 +57,4 @@ def health():
 
 
 app.include_router(auditoria.router)
+app.openapi = lambda: contrato_con_400(app)

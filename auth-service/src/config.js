@@ -9,6 +9,7 @@ function requerida(nombre) {
 const mongoUser = encodeURIComponent(requerida("MONGO_USER"));
 const mongoPassword = encodeURIComponent(requerida("MONGO_PASSWORD"));
 const mongoDb = requerida("MONGO_DB");
+const modoDemo = process.env.MODO === "demo";
 
 export const config = {
   port: 3000,
@@ -19,9 +20,12 @@ export const config = {
     expiresIn: process.env.JWT_EXPIRES_IN ?? "8h",
     issuer: process.env.JWT_ISSUER ?? "uch-fyd-auth",
   },
-  usuariosDePrueba: [
+  // Admin inicial siempre; cuentas de prueba solo en modo demo
+  usuariosIniciales: [
     { nombre: "Administrador", email: requerida("SEED_ADMIN_EMAIL"), password: requerida("SEED_ADMIN_PASSWORD"), rol: "ADMIN", estado: "ACTIVO" },
-    { nombre: "Cliente Activo", email: requerida("SEED_CLIENTE_EMAIL"), password: requerida("SEED_CLIENTE_PASSWORD"), rol: "CLIENTE", estado: "ACTIVO" },
-    { nombre: "Cliente Inactivo", email: requerida("SEED_INACTIVO_EMAIL"), password: requerida("SEED_INACTIVO_PASSWORD"), rol: "CLIENTE", estado: "INACTIVO" },
+    ...(modoDemo ? [
+      { nombre: "Cliente Activo", email: requerida("SEED_CLIENTE_EMAIL"), password: requerida("SEED_CLIENTE_PASSWORD"), rol: "CLIENTE", estado: "ACTIVO" },
+      { nombre: "Cliente Inactivo", email: requerida("SEED_INACTIVO_EMAIL"), password: requerida("SEED_INACTIVO_PASSWORD"), rol: "CLIENTE", estado: "INACTIVO" },
+    ] : []),
   ],
 };

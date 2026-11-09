@@ -1,4 +1,4 @@
-const CLAVE = "uchfyd_token";
+const CLAVE = "token";
 
 function leerPayload(token) {
   const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");

@@ -6,12 +6,12 @@ import { conectar } from "./db.js";
 import { UsuarioDao } from "./dao/usuarioDao.js";
 import { AuthService, ErrorNegocio } from "./services/authService.js";
 import { crearRutas } from "./routes/authRoutes.js";
-import { cargarUsuariosDePrueba } from "./seed.js";
+import { cargarUsuariosIniciales } from "./seed.js";
 import { contexto, log } from "./logger.js";
 
 const db = await conectar();
 const dao = new UsuarioDao(db);
-await cargarUsuariosDePrueba(dao, config.usuariosDePrueba);
+await cargarUsuariosIniciales(dao, config.usuariosIniciales);
 const service = new AuthService(dao, config.jwt);
 
 const contrato = readFileSync(new URL("../openapi.yaml", import.meta.url), "utf8");

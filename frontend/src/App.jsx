@@ -7,6 +7,7 @@ import Arquitectura from "./paginas/Arquitectura.jsx";
 import Auditoria from "./paginas/Auditoria.jsx";
 import Catalogo from "./paginas/Catalogo.jsx";
 import Pedidos from "./paginas/Pedidos.jsx";
+import { MODO_DEMO, NEGOCIO } from "./config.js";
 import { cerrarSesion, leerSesion } from "./sesion.js";
 
 const PESTANAS = [
@@ -38,7 +39,7 @@ function guardarPreferencia(clave, valor) {
 export default function App() {
   const [sesion, setSesion] = useState(() => leerSesion());
   const [pestana, setPestana] = useState("catalogo");
-  const [verGuia, setVerGuia] = useState(() => leerPreferencia("uchfyd_guia", true));
+  const [verGuia, setVerGuia] = useState(() => MODO_DEMO && leerPreferencia("guia", true));
 
   useEffect(() => {
     const salir = () => { cerrarSesion(); setSesion(null); };
@@ -47,7 +48,7 @@ export default function App() {
   }, []);
 
   function alternarGuia() {
-    guardarPreferencia("uchfyd_guia", !verGuia);
+    guardarPreferencia("guia", !verGuia);
     setVerGuia(!verGuia);
   }
 
@@ -67,7 +68,7 @@ export default function App() {
       <AvisoServicio />
       <header className="border-b border-linea bg-superficie">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 pt-4 sm:px-6">
-          <h1 className="text-lg font-semibold tracking-tight">Tienda</h1>
+          <h1 className="text-lg font-semibold tracking-tight">{NEGOCIO}</h1>
           <div className="flex items-center gap-3 text-sm">
             <span>{sesion.nombre}</span>
             <span className="rounded-full bg-fondo px-2.5 py-0.5 text-xs text-tenue">{ROLES[sesion.rol] ?? sesion.rol}</span>
@@ -87,9 +88,11 @@ export default function App() {
               </button>
             ))}
           </div>
-          <button onClick={alternarGuia} aria-pressed={verGuia} className="whitespace-nowrap py-2.5 text-sm text-acento hover:underline">
-            {verGuia ? "Ocultar guía" : "Mostrar guía"}
-          </button>
+          {MODO_DEMO && (
+            <button onClick={alternarGuia} aria-pressed={verGuia} className="whitespace-nowrap py-2.5 text-sm text-acento hover:underline">
+              {verGuia ? "Ocultar guía" : "Mostrar guía"}
+            </button>
+          )}
         </nav>
       </header>
 

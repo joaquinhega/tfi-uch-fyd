@@ -22,3 +22,7 @@ DATABASE_URL = URL.create(
 CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "30"))
 
 LOCK_TIMEOUT_SECONDS = int(os.getenv("LOCK_TIMEOUT_SECONDS", "30"))
+
+MODO_DEMO = os.getenv("MODO", "produccion") == "demo"
+CATALOGO_INICIAL = os.getenv("CATALOGO_INICIAL", "datos/catalogo.json")
+IA_MINIMO_PEDIDOS = int(os.getenv("IA_MINIMO_PEDIDOS", "20"))

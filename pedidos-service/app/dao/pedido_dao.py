@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -26,3 +28,11 @@ class PedidoDao:
             update(Pedido).where(Pedido.id == pedido_id, Pedido.estado == "PENDIENTE").values(estado="EN_ESPERA")
         )
         return resultado.rowcount == 1
+
+    def pendientes(self, antiguedad_segundos: float = 0) -> list[str]:
+        limite = datetime.now(timezone.utc) - timedelta(seconds=antiguedad_segundos)
+        consulta = select(Pedido.id).where(Pedido.estado.in_(("PENDIENTE", "EN_ESPERA")), Pedido.fecha <= limite)
+        return list(self.session.scalars(consulta))
+
+    def con_motivo(self, motivo: str) -> list[str]:
+        return list(self.session.scalars(select(Pedido.id).where(Pedido.motivo == motivo)))

@@ -9,8 +9,14 @@ class ArticuloDao:
     def __init__(self, session: Session):
         self.session = session
 
-    def listar(self) -> list[Articulo]:
-        return list(self.session.scalars(select(Articulo).order_by(Articulo.id)))
+    def listar(self, solo_activos: bool = False) -> list[Articulo]:
+        consulta = select(Articulo).order_by(Articulo.id)
+        if solo_activos:
+            consulta = consulta.where(Articulo.activo)
+        return list(self.session.scalars(consulta))
+
+    def existe_codigo(self, codigo: str) -> bool:
+        return self.session.scalar(select(func.count()).select_from(Articulo).where(Articulo.codigo == codigo)) > 0
 
     def obtener(self, articulo_id: int) -> Articulo | None:
         return self.session.get(Articulo, articulo_id)

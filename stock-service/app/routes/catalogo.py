@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.schemas import ArticuloOut, ArticuloUpdateIn, ErrorOut, RecomendacionOut
+from app.schemas import ArticuloIn, ArticuloOut, ArticuloUpdateIn, ErrorOut, RecomendacionOut
 from app.seguridad import exigir_admin
 from app.services.catalogo_service import CatalogoService
 
@@ -26,8 +26,22 @@ def recomendar_articulos(articulo_id: int, session: Session = Depends(get_sessio
     return CatalogoService(session).recomendar(articulo_id)
 
 
-@router.put("/articulos/{articulo_id}", response_model=ArticuloOut, summary="actualizarStockYPrecio",
+@router.get("/articulos", response_model=list[ArticuloOut], summary="listarArticulos",
+            dependencies=[Depends(exigir_admin)], responses={403: {"model": ErrorOut}})
+def listar_articulos(session: Session = Depends(get_session)):
+    return CatalogoService(session).listar_todos()
+
+
+@router.post("/articulos", response_model=ArticuloOut, status_code=201, summary="crearArticulo",
+             dependencies=[Depends(exigir_admin)],
+             responses={400: {"model": ErrorOut}, 403: {"model": ErrorOut}, 409: {"model": ErrorOut}})
+def crear_articulo(datos: ArticuloIn, session: Session = Depends(get_session)):
+    return CatalogoService(session).crear(datos)
+
+
+@router.put("/articulos/{articulo_id}", response_model=ArticuloOut, summary="actualizarArticulo",
+            description="Modifica nombre, stock o precio. activo=false es la baja lógica; activo=true la reactiva.",
             dependencies=[Depends(exigir_admin)],
             responses={400: {"model": ErrorOut}, 403: {"model": ErrorOut}, 404: {"model": ErrorOut}})
-def actualizar_stock_y_precio(articulo_id: int, datos: ArticuloUpdateIn, session: Session = Depends(get_session)):
-    return CatalogoService(session).actualizar_stock_y_precio(articulo_id, datos)
+def actualizar_articulo(articulo_id: int, datos: ArticuloUpdateIn, session: Session = Depends(get_session)):
+    return CatalogoService(session).actualizar(articulo_id, datos)

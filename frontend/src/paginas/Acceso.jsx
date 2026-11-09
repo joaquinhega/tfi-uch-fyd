@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { llamar } from "../api.js";
+import { MODO_DEMO, NEGOCIO } from "../config.js";
 import { guardarToken } from "../sesion.js";
 import { Boton, Campo, Mensaje } from "../componentes/ui.jsx";
 
@@ -85,9 +86,9 @@ export default function Acceso({ onLogin }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-lg border border-linea bg-superficie md:grid-cols-2">
+      <div className={`grid w-full overflow-hidden rounded-lg border border-linea bg-superficie ${MODO_DEMO ? "max-w-4xl md:grid-cols-2" : "max-w-md"}`}>
         <div className="p-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Tienda</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{NEGOCIO}</h1>
 
           <div className="mt-6 space-y-4">
             {aviso && <Mensaje tipo="ok">{aviso}</Mensaje>}
@@ -104,24 +105,26 @@ export default function Acceso({ onLogin }) {
           </p>
         </div>
 
-        <div className="border-t border-linea bg-fondo/60 p-8 md:border-l md:border-t-0">
-          <h2 className="font-semibold">Usuarios de prueba</h2>
-          <ul className="mt-5 space-y-2">
-            {USUARIOS_PRUEBA.map((u) => (
-              <li key={u.email}>
-                <button
-                  onClick={() => elegir(u.email)}
-                  className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-colors ${emailElegido === u.email ? "border-acento bg-superficie" : "border-linea bg-superficie hover:border-tenue/40"}`}
-                >
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="font-medium">{u.rol}</span>
-                    <span className="font-mono text-xs text-tenue">{u.email}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {MODO_DEMO && (
+          <div className="border-t border-linea bg-fondo/60 p-8 md:border-l md:border-t-0">
+            <h2 className="font-semibold">Usuarios de prueba</h2>
+            <ul className="mt-5 space-y-2">
+              {USUARIOS_PRUEBA.map((u) => (
+                <li key={u.email}>
+                  <button
+                    onClick={() => elegir(u.email)}
+                    className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-colors ${emailElegido === u.email ? "border-acento bg-superficie" : "border-linea bg-superficie hover:border-tenue/40"}`}
+                  >
+                    <span className="flex items-baseline justify-between gap-2">
+                      <span className="font-medium">{u.rol}</span>
+                      <span className="font-mono text-xs text-tenue">{u.email}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

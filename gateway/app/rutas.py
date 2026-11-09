@@ -37,6 +37,8 @@ REGLAS = [
     Regla("GET", re.compile(r"^/api/v1/stock/catalogo/\d+$"), "stock", PUBLICA),
     Regla("GET", re.compile(r"^/api/v1/stock/catalogo/\d+/recomendaciones$"), "stock", PUBLICA),
     Regla("GET", re.compile(r"^/api/v1/stock/openapi\.json$"), "stock", PUBLICA),
+    Regla("GET", re.compile(r"^/api/v1/stock/articulos$"), "stock", ADMIN),
+    Regla("POST", re.compile(r"^/api/v1/stock/articulos$"), "stock", ADMIN),
     Regla("PUT", re.compile(r"^/api/v1/stock/articulos/\d+$"), "stock", ADMIN),
     Regla("GET", re.compile(r"^/api/v1/pedidos/openapi\.json$"), "pedidos", PUBLICA),
     Regla("POST", re.compile(r"^/api/v1/pedidos$"), "pedidos", AUTENTICADO, "/v1/pedidos"),

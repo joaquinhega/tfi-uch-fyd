@@ -1,8 +1,7 @@
 import bcrypt from "bcryptjs";
 import { log } from "./logger.js";
 
-// Datos de prueba
-export async function cargarUsuariosDePrueba(dao, usuarios) {
+export async function cargarUsuariosIniciales(dao, usuarios) {
   for (const u of usuarios) {
     const email = u.email.trim().toLowerCase();
     if (await dao.buscarPorEmail(email)) continue;
@@ -14,6 +13,6 @@ export async function cargarUsuariosDePrueba(dao, usuarios) {
       estado: u.estado,
       creadoEn: new Date(),
     });
-    log("info", "usuario de prueba creado", { email, rol: u.rol, estado: u.estado });
+    log("info", "usuario inicial creado", { email, rol: u.rol, estado: u.estado });
   }
 }

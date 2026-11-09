@@ -17,7 +17,7 @@ Navegador ──► API Gateway ──► Autenticación   Node.js + MongoDB
 | Access token JWT RS256 (token issuer) | `auth-service/src/services/authService.js`, `gateway/app/seguridad.py` |
 | Circuit Breaker | `gateway/app/circuit_breaker.py`, `pedidos-service/app/cliente_stock.py` |
 | Bloqueo pesimista, transacción ACID, idempotencia | `stock-service/app/services/reserva_service.py` |
-| Compensación (liberarStock), modo degradado | `pedidos-service/app/services/pedido_service.py` |
+| Compensación (liberarStock), modo degradado, recuperación | `pedidos-service/app/services/pedido_service.py` |
 | Caché con TTL | `stock-service/app/cache.py` |
 | DAO | `*/dao/` |
 | Log Aggregation (ID de correlación) | `*/logger.py`, `auth-service/src/logger.js` |
@@ -57,6 +57,7 @@ pwsh scripts/demo/demo-completa.ps1
 | 07 | Modo degradado (EN ESPERA) |
 | 08 | Blockchain |
 | 09 | IA |
+| 10 | Recuperación tras reiniciar Pedidos |
 
 ## Contratos (OpenAPI)
 

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { llamar } from "../api.js";
+import { API_URL } from "../config.js";
+import { formatoHora } from "../formato.js";
 import { Boton, Panel, Seccion } from "../componentes/ui.jsx";
 
 // Estado de los circuitos desde /health del Gateway
-const URL_HEALTH = (import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1").replace(/\/api\/v1\/?$/, "") + "/health";
+const URL_HEALTH = API_URL.replace(/\/api\/v1\/?$/, "") + "/health";
 
 const CIRCUITO = {
   CERRADO: { texto: "Cerrado", color: "var(--color-ok)", fondo: "var(--color-ok-suave)" },
@@ -116,7 +118,7 @@ export default function Arquitectura() {
       resultado = { status: e.status, texto: e.message };
     }
     const ms = Math.round(performance.now() - inicio);
-    setIntentos((previos) => [{ ...resultado, ms, hora: new Date().toLocaleTimeString("es-AR") }, ...previos].slice(0, 6));
+    setIntentos((previos) => [{ ...resultado, ms, hora: formatoHora() }, ...previos].slice(0, 6));
     setConsultando(false);
   }
 

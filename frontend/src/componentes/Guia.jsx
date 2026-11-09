@@ -10,6 +10,7 @@ const GUIAS = {
   pedidos: [
     { hacer: "Entrar como cliente y como admin", patron: "JWT, roles" },
     { hacer: "Pedido en espera", comando: "pwsh scripts/demo/07-en-espera.ps1", patron: "Modo degradado" },
+    { hacer: "Reiniciar Pedidos con un pedido en espera", comando: "pwsh scripts/demo/10-recuperacion.ps1", patron: "Recuperación" },
   ],
   arquitectura: [
     { hacer: "Apagar Stock y consultar 3 veces", comando: "docker compose stop stock-service", patron: "Circuit Breaker: abierto" },
@@ -22,7 +23,7 @@ const GUIAS = {
   ],
   admin: [
     { hacer: "Registrar una cuenta y activarla", patron: "Token issuer" },
-    { hacer: "Cambiar stock o precio", patron: "Invalidación de caché" },
+    { hacer: "Alta, baja o cambio de un artículo", patron: "ABM, invalidación de caché" },
     { hacer: "Llamar como cliente", comando: "pwsh scripts/demo/02-acceso-rechazado.ps1", patron: "Gateway: 401 / 403" },
   ],
 };

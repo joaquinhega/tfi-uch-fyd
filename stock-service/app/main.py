@@ -8,16 +8,16 @@ from fastapi.responses import JSONResponse
 
 from app import models  # noqa: F401
 from app.db import Base, engine
-from app.errores import ErrorNegocio
+from app.errores import ErrorNegocio, contrato_con_400
 from app.logger import correlation_id, log
 from app.routes import catalogo, reservas
-from app.seed import cargar_datos_de_prueba
+from app.seed import cargar_datos_iniciales
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(engine)
-    cargar_datos_de_prueba()
+    cargar_datos_iniciales()
     log("info", "servicio iniciado")
     yield
 
@@ -65,3 +65,4 @@ def health():
 
 app.include_router(catalogo.router)
 app.include_router(reservas.router)
+app.openapi = lambda: contrato_con_400(app)

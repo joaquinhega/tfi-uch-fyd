@@ -1,4 +1,6 @@
 import contextvars
+import threading
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as PlazoVencido
@@ -8,7 +10,7 @@ from app import cliente_stock
 from app.circuit_breaker import CircuitoAbierto
 from app.cliente_auditoria import registrar_evento
 from app.cliente_stock import FalloStock
-from app.config import FAULT_AFTER_RESERVE, RESERVA_TIMEOUT_SECONDS
+from app.config import FAULT_AFTER_RESERVE, REINTENTO_SEGUNDOS, RESERVA_TIMEOUT_SECONDS
 from app.dao.pedido_dao import PedidoDao
 from app.db import SessionLocal
 from app.errores import ErrorNegocio
@@ -25,6 +27,7 @@ CODIGO_HTTP_POR_MOTIVO = {
     "RESERVA_RECHAZADA": 409,
     "STOCK_NO_DISPONIBLE": 503,
     "ERROR_INTERNO_COMPENSADO": 500,
+    "COMPENSACION_PENDIENTE": 500,
 }
 
 
@@ -71,27 +74,29 @@ def _confirmar(pedido_id: str, reserva: dict) -> None:
 
 
 # Compensación: liberarStock
-def _compensar(pedido_id: str) -> None:
+def _compensar(pedido_id: str) -> bool:
     try:
         respuesta = cliente_stock.liberar(pedido_id)
         if respuesta.status_code == 200:
             log("info", "compensación realizada: stock liberado", pedido_id=pedido_id)
-            return
+            return True
         log("error", "compensación rechazada por Stock", pedido_id=pedido_id, status=respuesta.status_code)
     except (CircuitoAbierto, FalloStock) as error:
-        log("critical", "no se pudo compensar: el stock queda retenido hasta reintentar", pedido_id=pedido_id, error=str(error))
+        log("critical", "no se pudo compensar; se reintentará", pedido_id=pedido_id, error=str(error))
+    return False
 
 
-def procesar_reserva(pedido_id: str) -> None:
+def procesar_reserva(pedido_id: str, recuperacion: bool = False) -> None:
     with SessionLocal() as session:
         pedido = PedidoDao(session).obtener(pedido_id)
         items = [{"articulo_id": i.articulo_id, "cantidad": i.cantidad} for i in pedido.items]
 
     try:
         respuesta = cliente_stock.reservar(pedido_id, items)
-    except CircuitoAbierto as error:
-        return _rechazar(pedido_id, "STOCK_NO_DISPONIBLE", str(error))
-    except FalloStock as error:
+    except (CircuitoAbierto, FalloStock) as error:
+        # En recuperación no se rechaza: la reserva pudo haberse hecho; se reintenta más tarde
+        if recuperacion:
+            return log("warning", "recuperación postergada: Stock no disponible", pedido_id=pedido_id)
         return _rechazar(pedido_id, "STOCK_NO_DISPONIBLE", str(error))
 
     if respuesta.status_code in (200, 201):
@@ -99,8 +104,10 @@ def procesar_reserva(pedido_id: str) -> None:
             _confirmar(pedido_id, respuesta.json())
         except Exception as error:
             log("error", "el pedido falló después de reservar; se compensa", pedido_id=pedido_id, error=str(error))
-            _compensar(pedido_id)
-            _rechazar(pedido_id, "ERROR_INTERNO_COMPENSADO", "Error al confirmar el pedido; la reserva fue liberada")
+            if _compensar(pedido_id):
+                _rechazar(pedido_id, "ERROR_INTERNO_COMPENSADO", "Error al confirmar el pedido; la reserva fue liberada")
+            else:
+                _rechazar(pedido_id, "COMPENSACION_PENDIENTE", "Error al confirmar el pedido; se reintentará liberar la reserva")
         return
 
     mensaje = respuesta.json().get("mensaje", "") if respuesta.content else ""
@@ -109,6 +116,35 @@ def procesar_reserva(pedido_id: str) -> None:
     if respuesta.status_code == 404:
         return _rechazar(pedido_id, "ARTICULO_NO_ENCONTRADO", mensaje)
     return _rechazar(pedido_id, "RESERVA_RECHAZADA", f"Stock respondió {respuesta.status_code}: {mensaje}")
+
+
+# Recuperación: pedidos sin resolver (por ejemplo, tras un reinicio) y compensaciones pendientes
+def recuperar(antiguedad_segundos: float) -> None:
+    with SessionLocal() as session:
+        dao = PedidoDao(session)
+        pendientes, compensaciones = dao.pendientes(antiguedad_segundos), dao.con_motivo("COMPENSACION_PENDIENTE")
+    for pedido_id in pendientes:
+        log("info", "recuperando pedido sin resolver", pedido_id=pedido_id)
+        procesar_reserva(pedido_id, recuperacion=True)
+    for pedido_id in compensaciones:
+        if _compensar(pedido_id):
+            with SessionLocal() as session, session.begin():
+                pedido = PedidoDao(session).obtener(pedido_id)
+                pedido.motivo = "ERROR_INTERNO_COMPENSADO"
+                pedido.detalle = "Error al confirmar el pedido; la reserva fue liberada"
+
+
+def iniciar_recuperacion() -> None:
+    def ciclo():
+        recuperar(antiguedad_segundos=0)
+        while True:
+            time.sleep(REINTENTO_SEGUNDOS)
+            try:
+                recuperar(antiguedad_segundos=120)
+            except Exception as error:
+                log("error", "falló el ciclo de recuperación", error=str(error))
+
+    threading.Thread(target=ciclo, daemon=True, name="recuperacion").start()
 
 
 class PedidoService:

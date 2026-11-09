@@ -1,60 +1,47 @@
+import json
 from decimal import Decimal
 
 from sqlalchemy import func, select
 
+from app.config import CATALOGO_INICIAL, MODO_DEMO
 from app.dao.articulo_dao import ArticuloDao
 from app.db import SessionLocal
 from app.logger import log
 from app.models import Articulo, Reserva, ReservaItem
 
-ARTICULOS = [
-    ("ART-001", "Auriculares inalámbricos", 50, "45000.00"),
-    ("ART-002", "Teclado mecánico", 30, "85000.00"),
-    ("ART-003", "Mouse óptico", 100, "15000.00"),
-    ("ART-004", "Monitor 24 pulgadas", 15, "210000.00"),
-    ("ART-005", "Parlante edición limitada", 1, "120000.00"),
-]
 
-# Historial para la IA: (artículos, cantidad de pedidos)
-HISTORIAL = [
-    ((2, 3), 12),
-    ((2, 3, 4), 5),
-    ((1, 5), 4),
-    ((1, 3), 2),
-    ((1,), 6),
-    ((3,), 8),
-    ((4,), 3),
-]
-
-
-def _cargar_articulos(session) -> None:
+def _cargar_articulos(session, articulos: list[dict]) -> None:
     dao = ArticuloDao(session)
     if dao.contar() > 0:
         return
-    for codigo, nombre, stock, precio in ARTICULOS:
-        dao.agregar(Articulo(codigo=codigo, nombre=nombre, stock=stock, precio=Decimal(precio)))
+    for a in articulos:
+        dao.agregar(Articulo(codigo=a["codigo"], nombre=a["nombre"], stock=a["stock"], precio=Decimal(a["precio"])))
     session.flush()
-    log("info", "artículos de prueba cargados", cantidad=len(ARTICULOS))
+    log("info", "catálogo inicial cargado", cantidad=len(articulos))
 
 
-def _cargar_historial(session) -> None:
-    ya_cargado = session.scalar(select(func.count()).select_from(Reserva).where(Reserva.id_pedido.like("hist-%")))
-    if ya_cargado:
+# Historial para la IA: solo en modo demo
+def _cargar_historial(session, historial: list[dict]) -> None:
+    if session.scalar(select(func.count()).select_from(Reserva).where(Reserva.id_pedido.like("hist-%"))):
         return
-    precios = {a.id: a.precio for a in ArticuloDao(session).listar()}
+    por_codigo = {a.codigo: a for a in ArticuloDao(session).listar()}
     numero = 0
-    for articulos, veces in HISTORIAL:
-        for _ in range(veces):
+    for grupo in historial:
+        articulos = [por_codigo[c] for c in grupo["articulos"]]
+        for _ in range(grupo["pedidos"]):
             numero += 1
             session.add(Reserva(
                 id_pedido=f"hist-{numero:04d}",
                 estado="RESERVADA",
-                items=[ReservaItem(articulo_id=a, cantidad=1, precio_unitario=precios[a]) for a in articulos],
+                items=[ReservaItem(articulo_id=a.id, cantidad=1, precio_unitario=a.precio) for a in articulos],
             ))
-    log("info", "historial de pedidos de prueba cargado (IA)", pedidos=numero)
+    log("info", "historial de demo cargado", pedidos=numero)
 
 
-def cargar_datos_de_prueba() -> None:
+def cargar_datos_iniciales() -> None:
+    with open(CATALOGO_INICIAL, encoding="utf-8") as archivo:
+        datos = json.load(archivo)
     with SessionLocal() as session, session.begin():
-        _cargar_articulos(session)
-        _cargar_historial(session)
+        _cargar_articulos(session, datos.get("articulos", []))
+        if MODO_DEMO:
+            _cargar_historial(session, datos.get("historial_demo", []))

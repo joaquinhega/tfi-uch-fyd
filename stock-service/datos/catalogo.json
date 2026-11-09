@@ -1,0 +1,18 @@
+{
+  "articulos": [
+    { "codigo": "ART-001", "nombre": "Auriculares inalámbricos", "stock": 50, "precio": "45000.00" },
+    { "codigo": "ART-002", "nombre": "Teclado mecánico", "stock": 30, "precio": "85000.00" },
+    { "codigo": "ART-003", "nombre": "Mouse óptico", "stock": 100, "precio": "15000.00" },
+    { "codigo": "ART-004", "nombre": "Monitor 24 pulgadas", "stock": 15, "precio": "210000.00" },
+    { "codigo": "ART-005", "nombre": "Parlante edición limitada", "stock": 1, "precio": "120000.00" }
+  ],
+  "historial_demo": [
+    { "articulos": ["ART-002", "ART-003"], "pedidos": 12 },
+    { "articulos": ["ART-002", "ART-003", "ART-004"], "pedidos": 5 },
+    { "articulos": ["ART-001", "ART-005"], "pedidos": 4 },
+    { "articulos": ["ART-001", "ART-003"], "pedidos": 2 },
+    { "articulos": ["ART-001"], "pedidos": 6 },
+    { "articulos": ["ART-003"], "pedidos": 8 },
+    { "articulos": ["ART-004"], "pedidos": 3 }
+  ]
+}

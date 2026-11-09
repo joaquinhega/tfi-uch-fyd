@@ -1,5 +1,7 @@
+import { API_URL } from "./config.js";
+
 // Todo pasa por el API Gateway
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
+const BASE = API_URL;
 
 export class ErrorApi extends Error {
   constructor(status, codigo, mensaje, datos, correlacion) {

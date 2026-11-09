@@ -3,8 +3,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 COPY . .
-ARG VITE_API_URL=http://localhost:8080/api/v1
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_URL VITE_NEGOCIO VITE_MONEDA VITE_LOCALE VITE_MODO
 RUN npm run build
 
 FROM nginx:1.27-alpine

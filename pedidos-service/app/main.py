@@ -9,14 +9,16 @@ from fastapi.responses import JSONResponse
 from app import models  # noqa: F401
 from app.cliente_stock import circuito_stock
 from app.db import Base, engine
-from app.errores import ErrorNegocio
+from app.errores import ErrorNegocio, contrato_con_400
 from app.logger import correlation_id, log
 from app.routes import pedidos
+from app.services.pedido_service import iniciar_recuperacion
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(engine)
+    iniciar_recuperacion()
     log("info", "servicio iniciado")
     yield
 
@@ -63,3 +65,4 @@ def health():
 
 
 app.include_router(pedidos.router)
+app.openapi = lambda: contrato_con_400(app)

@@ -34,7 +34,7 @@ body {
     @apply w-full text-sm;
   }
   .tabla th {
-    @apply border-b border-linea px-4 py-2.5 text-left font-medium text-tenue;
+    @apply whitespace-nowrap border-b border-linea px-4 py-2.5 text-left font-medium text-tenue;
   }
   .tabla td {
     @apply border-b border-linea/70 px-4 py-3;
