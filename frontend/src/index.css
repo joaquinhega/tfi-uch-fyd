@@ -1,23 +1,33 @@
 @import "tailwindcss";
+@import "@fontsource-variable/schibsted-grotesk";
 
-/* Paleta y tipografía: un solo color de acento (azul) y colores de estado */
+/* Paleta de Nodo: grafito y niebla de base, naranja señal solo para comprar y para la marca */
 @theme {
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  --color-fondo: #f4f5f7;
+  --color-fondo: #eceff2;
   --color-superficie: #ffffff;
-  --color-tinta: #1a2233;
-  --color-tenue: #5b6475;
-  --color-linea: #dde1e8;
-  --color-acento: #1f4fd1;
-  --color-acento-suave: #e8eefc;
-  --color-ok: #1e7a46;
-  --color-ok-suave: #e5f3ea;
-  --color-espera: #94600f;
-  --color-espera-suave: #fbf0dc;
+  --color-tinta: #17212b;
+  --color-tenue: #566371;
+  --color-linea: #d5dbe1;
+  --color-grafito: #17212b;
+  --color-acento: #d63f0c;
+  --color-acento-suave: #fceae3;
+  --color-ok: #12794a;
+  --color-ok-suave: #e2f3ea;
+  --color-espera: #8f5200;
+  --color-espera-suave: #fbefd9;
   --color-error: #b3261e;
   --color-error-suave: #fbe8e6;
+
+  /* Un fondo distinto por categoría de producto */
+  --color-tinte-1: #fbe3d6;
+  --color-tinte-2: #dcebf7;
+  --color-tinte-3: #d9f0e4;
+  --color-tinte-4: #e6e1f6;
+  --color-tinte-5: #f3ead2;
+  --color-tinte-6: #e1e6eb;
 }
 
 body {
@@ -42,4 +52,22 @@ body {
   .tabla tbody tr:last-child td {
     @apply border-b-0;
   }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes entra-derecha {
+    from { transform: translateX(2rem); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  @keyframes aparece {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes entra-centro {
+    from { transform: translateY(0.5rem) scale(0.98); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  .cajon-panel { animation: entra-derecha 180ms ease-out; }
+  .modal-panel { animation: entra-centro 160ms ease-out; }
+  .cajon-fondo { animation: aparece 180ms ease-out; }
 }

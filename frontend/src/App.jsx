@@ -1,111 +1,119 @@
 import { useEffect, useState } from "react";
+import { CarritoProvider, useCarrito } from "./carrito.jsx";
+import { CatalogoProvider } from "./catalogo.jsx";
+import { ConfirmacionProvider, useConfirmar } from "./confirmacion.jsx";
+import { CuentaProvider, useCuenta } from "./cuenta.jsx";
+import { PresentacionProvider, usePresentacion } from "./presentacion.jsx";
 import AvisoServicio from "./componentes/AvisoServicio.jsx";
-import Guia from "./componentes/Guia.jsx";
-import Acceso from "./paginas/Acceso.jsx";
-import Admin from "./paginas/Admin.jsx";
-import Arquitectura from "./paginas/Arquitectura.jsx";
-import Auditoria from "./paginas/Auditoria.jsx";
-import Catalogo from "./paginas/Catalogo.jsx";
-import Pedidos from "./paginas/Pedidos.jsx";
-import { MODO_DEMO, NEGOCIO } from "./config.js";
-import { cerrarSesion, leerSesion } from "./sesion.js";
+import Carrito from "./componentes/Carrito.jsx";
+import Encabezado from "./componentes/Encabezado.jsx";
+import { Boton } from "./componentes/ui.jsx";
+import MisPedidos from "./paginas/MisPedidos.jsx";
+import PanelAdmin from "./paginas/PanelAdmin.jsx";
+import Presentacion from "./paginas/Presentacion.jsx";
+import Tienda from "./paginas/Tienda.jsx";
+import { LEMA, NEGOCIO } from "./config.js";
+import { ir, useRuta } from "./ruta.js";
 
-const PESTANAS = [
-  { id: "catalogo", nombre: "Catálogo" },
-  { id: "pedidos", nombre: "Pedidos" },
-  { id: "arquitectura", nombre: "Arquitectura" },
-  { id: "auditoria", nombre: "Auditoría", soloAdmin: true },
-  { id: "admin", nombre: "Administración", soloAdmin: true },
-];
-
-const ROLES = { ADMIN: "Administrador", CLIENTE: "Cliente" };
-
-function leerPreferencia(clave, porDefecto) {
-  try {
-    const valor = localStorage.getItem(clave);
-    return valor === null ? porDefecto : valor === "true";
-  } catch {
-    return porDefecto;
-  }
+function RequiereSesion({ texto, onIngresar }) {
+  return (
+    <div className="mx-auto max-w-md rounded-lg border border-linea bg-superficie px-6 py-12 text-center">
+      <p className="font-semibold">{texto}</p>
+      <Boton variante="oscuro" className="mt-5" onClick={onIngresar}>Ingresar</Boton>
+    </div>
+  );
 }
 
-function guardarPreferencia(clave, valor) {
-  try {
-    localStorage.setItem(clave, String(valor));
-  } catch {
+function Aplicacion() {
+  const ruta = useRuta();
+  const { unidades, vaciar } = useCarrito();
+  const { sesion, pedirAcceso, salir: cerrarSesion } = useCuenta();
+  const { activo: presentacion } = usePresentacion();
+  const confirmar = useConfirmar();
+  const [carrito, setCarrito] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const esAdmin = sesion?.rol === "ADMIN";
+  const enPanel = ruta.startsWith("/admin");
+  const enPresentacion = ruta.startsWith("/presentacion");
+
+  async function salir() {
+    const ok = await confirmar({
+      titulo: "¿Cerrar sesión?",
+      mensaje: !esAdmin && unidades > 0 ? "Se va a vaciar tu carrito. Para volver a comprar vas a tener que ingresar de nuevo." : "Para volver a operar vas a tener que ingresar de nuevo.",
+      accion: "Cerrar sesión",
+    });
+    if (!ok) return;
+    cerrarSesion();
+    vaciar();
+    setCarrito(false);
+    ir("/");
   }
-}
 
-export default function App() {
-  const [sesion, setSesion] = useState(() => leerSesion());
-  const [pestana, setPestana] = useState("catalogo");
-  const [verGuia, setVerGuia] = useState(() => MODO_DEMO && leerPreferencia("guia", true));
-
+  // El administrador trabaja en su panel; el cliente no entra al panel
   useEffect(() => {
-    const salir = () => { cerrarSesion(); setSesion(null); };
-    window.addEventListener("sesion-vencida", salir);
-    return () => window.removeEventListener("sesion-vencida", salir);
-  }, []);
+    if (esAdmin && !enPanel && !enPresentacion) ir("/admin/pedidos");
+    if (enPanel && sesion && !esAdmin) ir("/");
+  }, [esAdmin, enPanel, enPresentacion, sesion]);
 
-  function alternarGuia() {
-    guardarPreferencia("guia", !verGuia);
-    setVerGuia(!verGuia);
+  // Con el modo presentación apagado, el apartado no existe
+  useEffect(() => {
+    if (enPresentacion && !presentacion) ir(esAdmin ? "/admin/pedidos" : "/");
+  }, [enPresentacion, presentacion, esAdmin]);
+
+  if (esAdmin) return <PanelAdmin sesion={sesion} ruta={ruta} onSalir={salir} />;
+
+  let pagina;
+  if (ruta === "/pedidos") {
+    pagina = sesion ? <MisPedidos sesion={sesion} /> : <RequiereSesion texto="Ingresá para ver tus pedidos." onIngresar={() => pedirAcceso()} />;
+  } else if (enPanel) {
+    pagina = <RequiereSesion texto="El panel es solo para administradores." onIngresar={() => pedirAcceso()} />;
+  } else if (enPresentacion && presentacion) {
+    pagina = <Presentacion seccion={ruta.split("/")[2]} />;
+  } else {
+    pagina = <Tienda busqueda={busqueda} onBusqueda={setBusqueda} />;
   }
-
-  if (!sesion) {
-    return (
-      <>
-        <AvisoServicio />
-        <Acceso onLogin={() => { setSesion(leerSesion()); setPestana("catalogo"); }} />
-      </>
-    );
-  }
-
-  const visibles = PESTANAS.filter((p) => !p.soloAdmin || sesion.rol === "ADMIN");
 
   return (
     <div className="min-h-screen">
       <AvisoServicio />
-      <header className="border-b border-linea bg-superficie">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 pt-4 sm:px-6">
-          <h1 className="text-lg font-semibold tracking-tight">{NEGOCIO}</h1>
-          <div className="flex items-center gap-3 text-sm">
-            <span>{sesion.nombre}</span>
-            <span className="rounded-full bg-fondo px-2.5 py-0.5 text-xs text-tenue">{ROLES[sesion.rol] ?? sesion.rol}</span>
-            <button className="text-tenue hover:text-tinta hover:underline" onClick={() => { cerrarSesion(); setSesion(null); }}>Salir</button>
-          </div>
-        </div>
-        <nav className="mx-auto mt-2 flex max-w-7xl items-center justify-between gap-2 px-4 sm:px-6">
-          <div className="-mb-px flex gap-1 overflow-x-auto">
-            {visibles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setPestana(p.id)}
-                aria-current={pestana === p.id ? "page" : undefined}
-                className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors ${pestana === p.id ? "border-acento font-medium text-tinta" : "border-transparent text-tenue hover:text-tinta"}`}
-              >
-                {p.nombre}
-              </button>
-            ))}
-          </div>
-          {MODO_DEMO && (
-            <button onClick={alternarGuia} aria-pressed={verGuia} className="whitespace-nowrap py-2.5 text-sm text-acento hover:underline">
-              {verGuia ? "Ocultar guía" : "Mostrar guía"}
-            </button>
-          )}
-        </nav>
-      </header>
+      <Encabezado
+        ruta={ruta}
+        busqueda={busqueda}
+        onBusqueda={setBusqueda}
+        unidades={unidades}
+        onAbrirCarrito={() => setCarrito(true)}
+        onSalir={salir}
+      />
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{pagina}</main>
 
-      <div className={`mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 ${verGuia ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
-        <main className="min-w-0">
-          {pestana === "catalogo" && <Catalogo sesion={sesion} />}
-          {pestana === "pedidos" && <Pedidos sesion={sesion} />}
-          {pestana === "arquitectura" && <Arquitectura />}
-          {pestana === "auditoria" && sesion.rol === "ADMIN" && <Auditoria sesion={sesion} />}
-          {pestana === "admin" && sesion.rol === "ADMIN" && <Admin sesion={sesion} />}
-        </main>
-        {verGuia && <Guia pestana={pestana} />}
-      </div>
+      <footer className="mx-auto max-w-7xl px-4 pb-10 text-sm text-tenue sm:px-6">
+        {NEGOCIO}{LEMA && ` · ${LEMA}`}
+      </footer>
+
+      {carrito && (
+        <Carrito
+          sesion={sesion}
+          onCerrar={() => setCarrito(false)}
+          onPedirAcceso={() => pedirAcceso("Ingresá para confirmar tu pedido.")}
+          onVerPedidos={() => { setCarrito(false); ir("/pedidos"); }}
+        />
+      )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <PresentacionProvider>
+      <ConfirmacionProvider>
+        <CarritoProvider>
+          <CatalogoProvider>
+            <CuentaProvider>
+              <Aplicacion />
+            </CuentaProvider>
+          </CatalogoProvider>
+        </CarritoProvider>
+      </ConfirmacionProvider>
+    </PresentacionProvider>
   );
 }

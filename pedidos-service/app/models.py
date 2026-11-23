@@ -34,6 +34,8 @@ class PedidoItem(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     pedido_id: Mapped[str] = mapped_column(ForeignKey("pedidos.id"))
     articulo_id: Mapped[int] = mapped_column(Integer)
+    # Nombre al momento de la compra (lo informa Stock al reservar)
+    nombre: Mapped[str | None] = mapped_column(String(120), nullable=True)
     cantidad: Mapped[int] = mapped_column(Integer)
     precio_unitario: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     subtotal: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)

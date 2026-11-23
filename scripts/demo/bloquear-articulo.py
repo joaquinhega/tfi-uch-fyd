@@ -1,3 +1,4 @@
+import sys
 import time
 
 from sqlalchemy import select
@@ -5,7 +6,7 @@ from sqlalchemy import select
 from app.db import SessionLocal
 from app.models import Articulo
 
-ARTICULO_ID = 2
+ARTICULO_ID = int(sys.argv[1])
 SEGUNDOS = 8
 
 with SessionLocal() as session, session.begin():

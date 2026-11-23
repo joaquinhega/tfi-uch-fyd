@@ -15,7 +15,15 @@ def _cargar_articulos(session, articulos: list[dict]) -> None:
     if dao.contar() > 0:
         return
     for a in articulos:
-        dao.agregar(Articulo(codigo=a["codigo"], nombre=a["nombre"], stock=a["stock"], precio=Decimal(a["precio"])))
+        dao.agregar(Articulo(
+            codigo=a["codigo"],
+            nombre=a["nombre"],
+            categoria=a["categoria"],
+            descripcion=a.get("descripcion", ""),
+            imagen=a.get("imagen"),
+            stock=a["stock"],
+            precio=Decimal(a["precio"]),
+        ))
     session.flush()
     log("info", "catálogo inicial cargado", cantidad=len(articulos))
 
@@ -33,7 +41,7 @@ def _cargar_historial(session, historial: list[dict]) -> None:
             session.add(Reserva(
                 id_pedido=f"hist-{numero:04d}",
                 estado="RESERVADA",
-                items=[ReservaItem(articulo_id=a.id, cantidad=1, precio_unitario=a.precio) for a in articulos],
+                items=[ReservaItem(articulo_id=a.id, nombre=a.nombre, cantidad=1, precio_unitario=a.precio) for a in articulos],
             ))
     log("info", "historial de demo cargado", pedidos=numero)
 

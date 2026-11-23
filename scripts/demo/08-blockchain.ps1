@@ -1,4 +1,5 @@
 . "$PSScriptRoot\comun.ps1"
+$mouse = IdArticulo $CodMouse
 Titulo "8. Blockchain: registro de auditoría inmutable"
 
 # Ataque simulado: cambia un bloque directo en la base
@@ -13,7 +14,7 @@ $cliente = TokenCliente
 Paso "Generando eventos: registro de cuenta, activación y un pedido..."
 $r = Llamar POST "/auth/registro" @{ nombre = "Prueba Auditoria"; email = "auditoria$(Get-Random)@mail.com"; password = "clave1234" }
 Llamar PATCH "/auth/usuarios/$($r.Body.id)/activar" -Token $admin | Out-Null
-$p = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba Auditoria"; items = @(@{ articulo_id = 3; cantidad = 1 }) } -Token $cliente
+$p = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba Auditoria"; items = @(@{ articulo_id = $mouse; cantidad = 1 }) } -Token $cliente
 Verificar "Pedido aceptado (201)" ($p.Status -eq 201) "-> $($p.Status)"
 Start-Sleep -Milliseconds 500
 

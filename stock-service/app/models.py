@@ -15,6 +15,10 @@ class Articulo(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     codigo: Mapped[str] = mapped_column(String(20), unique=True)
     nombre: Mapped[str] = mapped_column(String(120))
+    categoria: Mapped[str] = mapped_column(String(40), index=True)
+    descripcion: Mapped[str] = mapped_column(String(400), default="", server_default="")
+    # Nombre de archivo (se sirve desde el frontend) o URL completa
+    imagen: Mapped[str | None] = mapped_column(String(200), nullable=True)
     stock: Mapped[int] = mapped_column(Integer)
     precio: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     # Baja lógica
@@ -44,6 +48,8 @@ class ReservaItem(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     id_pedido: Mapped[str] = mapped_column(ForeignKey("reservas.id_pedido"))
     articulo_id: Mapped[int] = mapped_column(ForeignKey("articulos.id"))
+    # Nombre del artículo al momento de reservar
+    nombre: Mapped[str] = mapped_column(String(120))
     cantidad: Mapped[int] = mapped_column(Integer)
     precio_unitario: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     reserva: Mapped[Reserva] = relationship(back_populates="items")

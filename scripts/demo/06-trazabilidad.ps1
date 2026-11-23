@@ -1,8 +1,9 @@
 . "$PSScriptRoot\comun.ps1"
+$mouse = IdArticulo $CodMouse
 Titulo "6. Seguimiento de un pedido por ID de correlación (Log Aggregation)"
 
 $token = TokenCliente
-$r = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba trazabilidad"; items = @(@{ articulo_id = 3; cantidad = 1 }) } -Token $token
+$r = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba trazabilidad"; items = @(@{ articulo_id = $mouse; cantidad = 1 }) } -Token $token
 Verificar "Pedido creado (201)" ($r.Status -eq 201) "-> $($r.Status)"
 Paso "ID de correlación: $($r.CorrelationId)"
 

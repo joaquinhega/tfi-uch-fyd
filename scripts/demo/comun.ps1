@@ -6,6 +6,12 @@ Set-Location $Raiz
 $Gw = "http://127.0.0.1:8080/api/v1"
 $script:Fallas = 0
 
+# Artículos que usan las demos (por código del catálogo)
+$CodUltimo = "AUD-002"
+$CodMouse = "PER-002"
+$CodTeclado = "PER-001"
+$CodAuriculares = "AUD-001"
+
 $Cfg = @{}
 Get-Content "$Raiz\.env" | Where-Object { $_ -match '^\s*([^#=]+)=(.*)$' } |
   ForEach-Object { $Cfg[$matches[1].Trim()] = $matches[2].Trim() }
@@ -62,6 +68,14 @@ function EsperarPedido([string]$Id, [string]$TokenUsuario, [int]$Segundos = 30) 
     Start-Sleep -Seconds 1
   }
   return $r.Body
+}
+
+# Id de un artículo a partir de su código (no depende del orden de carga)
+function IdArticulo([string]$Codigo) {
+  $r = Llamar GET "/stock/catalogo"
+  $articulo = @($r.Body | Where-Object codigo -eq $Codigo)[0]
+  if (-not $articulo) { throw "No existe el artículo $Codigo en el catálogo" }
+  [int]$articulo.id
 }
 
 # Stock real (sin caché)

@@ -39,8 +39,6 @@ export default function Auditoria({ sesion }) {
     }
   }, [sesion.token]);
 
-  useEffect(() => { cargar(); }, [cargar]);
-
   async function verificar() {
     setVerificando(true);
     setVerificacion(null);
@@ -54,6 +52,9 @@ export default function Auditoria({ sesion }) {
       setVerificando(false);
     }
   }
+
+  // Al abrir la sección se verifica la cadena completa
+  useEffect(() => { verificar(); }, [cargar]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const invalido = verificacion?.primer_bloque_invalido;
 
@@ -73,6 +74,25 @@ export default function Auditoria({ sesion }) {
           ? <Mensaje tipo="ok">Cadena válida ({verificacion.bloques_verificados} bloques).</Mensaje>
           : <Mensaje tipo="error">Cadena alterada en el bloque #{invalido}. {verificacion.motivo}</Mensaje>
       )}
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel className="space-y-2 p-5 text-sm">
+          <h3 className="font-semibold">Qué registra</h3>
+          <p>Cada evento importante del negocio queda como un bloque: cuentas registradas, activadas y desactivadas, y pedidos aceptados y rechazados. Lo envían Autenticación y Pedidos.</p>
+        </Panel>
+        <Panel className="space-y-2 p-5 text-sm">
+          <h3 className="font-semibold">Cómo se protege</h3>
+          <p>Cada bloque guarda el hash SHA-256 de su contenido y el hash del bloque anterior. Si alguien modifica un bloque en la base, su hash deja de coincidir y la cadena se rompe desde ahí.</p>
+        </Panel>
+        <Panel className="space-y-2 p-5 text-sm">
+          <h3 className="font-semibold">Cómo mejorarla</h3>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Publicar el último hash fuera del sistema cada día, para detectar si se reescribe la cadena entera.</li>
+            <li>Que cada servicio firme sus eventos, para saber quién los emitió.</li>
+            <li>Verificar la cadena en forma automática y alertar si falla.</li>
+          </ul>
+        </Panel>
+      </div>
 
       <Panel>
         <table className="tabla">

@@ -18,6 +18,7 @@ def a_salida(reserva: Reserva) -> ReservaOut:
     items = [
         ItemReservaOut(
             articulo_id=i.articulo_id,
+            nombre=i.nombre,
             cantidad=i.cantidad,
             precio_unitario=i.precio_unitario,
             subtotal=i.precio_unitario * i.cantidad,
@@ -67,7 +68,8 @@ class ReservaService:
                     articulo = articulos[articulo_id]
                     articulo.stock -= cantidad
                     reserva.items.append(
-                        ReservaItem(articulo_id=articulo_id, cantidad=cantidad, precio_unitario=articulo.precio)
+                        ReservaItem(articulo_id=articulo_id, nombre=articulo.nombre, cantidad=cantidad,
+                                    precio_unitario=articulo.precio)
                     )
                 self.reservas.agregar(reserva)
         except IntegrityError:

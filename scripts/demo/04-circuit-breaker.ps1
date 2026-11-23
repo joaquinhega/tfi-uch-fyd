@@ -1,4 +1,5 @@
 . "$PSScriptRoot\comun.ps1"
+$mouse = IdArticulo $CodMouse
 Titulo "4. Circuit Breaker con Stock caído"
 $fallos = [int]$Cfg.CB_FAIL_MAX
 $espera = [int]$Cfg.CB_RESET_TIMEOUT_SECONDS
@@ -20,7 +21,7 @@ try {
   $login = Llamar POST "/auth/login" @{ email = $Cfg.SEED_CLIENTE_EMAIL; password = $Cfg.SEED_CLIENTE_PASSWORD }
   Verificar "Autenticación sigue funcionando (200)" ($login.Status -eq 200) "-> $($login.Status)"
 
-  $r = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba CB"; items = @(@{ articulo_id = 3; cantidad = 1 }) } -Token $login.Body.access_token
+  $r = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba CB"; items = @(@{ articulo_id = $mouse; cantidad = 1 }) } -Token $login.Body.access_token
   Verificar "Un pedido se rechaza de forma controlada (503 STOCK_NO_DISPONIBLE)" ($r.Status -eq 503 -and $r.Body.motivo -eq "STOCK_NO_DISPONIBLE") "-> $($r.Status) $($r.Body.motivo)"
 } finally {
   Paso "Levantando Stock otra vez..."

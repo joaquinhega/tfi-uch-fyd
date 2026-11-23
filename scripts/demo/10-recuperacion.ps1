@@ -1,19 +1,21 @@
 . "$PSScriptRoot\comun.ps1"
+$teclado = IdArticulo $CodTeclado
 Titulo "10. Recuperación: pedido EN ESPERA y reinicio de Pedidos"
 
 $token = TokenCliente
-Paso "Bloqueando el artículo 2 durante 8 s..."
-$trabajo = Start-Job -WorkingDirectory $Raiz -ScriptBlock {
-  Get-Content scripts/demo/bloquear-articulo.py -Raw | docker compose exec -T stock-service python -
+Paso "Bloqueando $CodTeclado durante 8 s..."
+$trabajo = Start-Job -WorkingDirectory $Raiz -ArgumentList $teclado -ScriptBlock {
+  param($id)
+  Get-Content scripts/demo/bloquear-articulo.py -Raw | docker compose exec -T stock-service python - $id
 }
 $bloqueado = $false
 for ($i = 0; $i -lt 20 -and -not $bloqueado; $i++) {
   Start-Sleep -Milliseconds 500
   $bloqueado = [bool]((Receive-Job $trabajo -Keep) -match "bloqueada")
 }
-Verificar "Fila del artículo 2 bloqueada" $bloqueado
+Verificar "Fila de $CodTeclado bloqueada" $bloqueado
 
-$r = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba recuperación"; items = @(@{ articulo_id = 2; cantidad = 1 }) } -Token $token
+$r = Llamar POST "/pedidos" @{ nombre_cliente = "Prueba recuperación"; items = @(@{ articulo_id = $teclado; cantidad = 1 }) } -Token $token
 Verificar "El pedido queda EN_ESPERA (202)" ($r.Status -eq 202) "-> $($r.Status) $($r.Body.estado)"
 
 Paso "Reiniciando Pedidos con el pedido sin resolver..."

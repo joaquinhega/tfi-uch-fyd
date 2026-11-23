@@ -1,52 +1,71 @@
-import { Codigo } from "./ui.jsx";
+import { Comando } from "./ui.jsx";
 
-const GUIAS = {
-  catalogo: [
-    { hacer: "Confirmar un pedido", patron: "API Gateway, reservarStock, ID de correlación" },
-    { hacer: "Pedir más unidades que el stock", patron: "Transacción ACID" },
-    { hacer: "Se compra junto con (teclado)", patron: "IA: reglas de asociación" },
-    { hacer: "Apagar Stock y actualizar 3 veces", comando: "docker compose stop stock-service", patron: "Circuit Breaker" },
-  ],
-  pedidos: [
-    { hacer: "Entrar como cliente y como admin", patron: "JWT, roles" },
-    { hacer: "Pedido en espera", comando: "pwsh scripts/demo/07-en-espera.ps1", patron: "Modo degradado" },
-    { hacer: "Reiniciar Pedidos con un pedido en espera", comando: "pwsh scripts/demo/10-recuperacion.ps1", patron: "Recuperación" },
-  ],
-  arquitectura: [
-    { hacer: "Apagar Stock y consultar 3 veces", comando: "docker compose stop stock-service", patron: "Circuit Breaker: abierto" },
-    { hacer: "Levantar Stock, esperar 15 s y consultar", comando: "docker compose start stock-service", patron: "Circuit Breaker: semiabierto, cerrado" },
-  ],
-  auditoria: [
-    { hacer: "Hacer un pedido y actualizar", patron: "Blockchain: hash anterior" },
-    { hacer: "Verificar cadena", patron: "Blockchain: integridad" },
-    { hacer: "Adulterar un bloque", comando: "pwsh scripts/demo/08-blockchain.ps1", patron: "Blockchain: inmutabilidad" },
-  ],
-  admin: [
-    { hacer: "Registrar una cuenta y activarla", patron: "Token issuer" },
-    { hacer: "Alta, baja o cambio de un artículo", patron: "ABM, invalidación de caché" },
-    { hacer: "Llamar como cliente", comando: "pwsh scripts/demo/02-acceso-rechazado.ps1", patron: "Gateway: 401 / 403" },
-  ],
-};
+// Guion de la exposición, en el orden de la consigna del TFI y del TP3
+const GUION = [
+  {
+    titulo: "1. Arquitectura",
+    donde: "Arquitectura → Vistas",
+    pasos: [
+      { hacer: "Vista lógica: 3 servicios con contrato y el Gateway como única entrada", patron: "SOA · API Gateway" },
+      { hacer: "Vista de comportamiento: una compra de punta a punta", patron: "Token · reserva · compensación" },
+      { hacer: "Vista física: nodos, bases separadas y diferencias con lo implementado", patron: "Despliegue · D3" },
+    ],
+  },
+  {
+    titulo: "2. Flujo del cliente",
+    donde: "Pestaña del cliente",
+    pasos: [
+      { hacer: "Agregar al carrito sin sesión: pide ingresar", patron: "Access token obligatorio" },
+      { hacer: "Ingresar como cliente", patron: "Auth emite el JWT (RS256)" },
+      { hacer: "Abrir un producto: «Se compra junto con»", patron: "IA: reglas de asociación" },
+      { hacer: "Confirmar el pedido y mostrar el ID de correlación", patron: "Gateway → Pedidos → Stock · Log Aggregation" },
+      { hacer: "Pedir más unidades que el stock", patron: "Transacción en Stock: rechazo" },
+    ],
+  },
+  {
+    titulo: "3. Flujo del administrador",
+    donde: "Pestaña del administrador",
+    pasos: [
+      { hacer: "Pedidos: el pedido del cliente aparece aceptado", patron: "pedidos-api" },
+      { hacer: "Cuentas: activar la cuenta registrada", patron: "auth-api · evento auditado" },
+      { hacer: "Artículos: cambiar stock o precio", patron: "stock-api · invalidación de caché" },
+      { hacer: "Recomendaciones IA: auditar las reglas que usa la tienda", patron: "IA explicable" },
+      { hacer: "Auditoría: verificar la cadena", patron: "Blockchain: integridad" },
+    ],
+  },
+  {
+    titulo: "4. Lo que no se ve usando la tienda",
+    donde: "Arquitectura → En vivo y Pruebas",
+    pasos: [
+      { hacer: "Muchos pedidos al mismo producto", patron: "D1: sin sobreventa" },
+      { hacer: "Ataques al Gateway: sin token, firma alterada, token falsificado", patron: "401 / 403 / 404" },
+      { hacer: "Apagar Stock y consultar 3 veces", comando: "docker compose stop stock-service", patron: "Circuit Breaker" },
+      { hacer: "Pedido en espera y compensación", comando: "pwsh scripts/demo/07-en-espera.ps1", patron: "Modo degradado · liberarStock" },
+    ],
+  },
+];
 
-export default function Guia({ pestana }) {
-  const pasos = GUIAS[pestana];
-  if (!pasos) return null;
-
+export default function Guia() {
   return (
-    <aside aria-label="Guía" className="rounded-lg border border-linea bg-superficie p-5 lg:sticky lg:top-6">
-      <h2 className="font-semibold">Qué probar</h2>
-      <ol className="mt-4 space-y-4">
-        {pasos.map((paso, i) => (
-          <li key={paso.hacer} className="grid grid-cols-[1.5rem_1fr] gap-x-2 text-sm">
-            <span className="flex size-6 items-center justify-center rounded-full bg-acento-suave text-xs font-semibold text-acento">{i + 1}</span>
-            <div className="space-y-1">
-              <p className="font-medium leading-6">{paso.hacer}</p>
-              {paso.comando && <p><Codigo>{paso.comando}</Codigo></p>}
-              <p className="text-xs text-acento">{paso.patron}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </aside>
+    <div className="space-y-6">
+      <p className="text-sm text-tenue">Conviene tener abiertas dos pestañas: una con la sesión del cliente y otra con la del administrador. Cada pestaña guarda su propia sesión.</p>
+      {GUION.map((bloque) => (
+        <section key={bloque.titulo} className="space-y-3">
+          <div>
+            <h3 className="font-semibold">{bloque.titulo}</h3>
+            <p className="text-xs text-tenue">{bloque.donde}</p>
+          </div>
+          <ol className="space-y-3">
+            {bloque.pasos.map((paso) => (
+              <li key={paso.hacer} className="border-l-2 border-acento-suave pl-3 text-sm">
+                <p className="font-medium">{paso.hacer}</p>
+                {paso.comando && <div className="mt-1"><Comando texto={paso.comando} /></div>}
+                <p className="text-xs text-acento">{paso.patron}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
   );
 }

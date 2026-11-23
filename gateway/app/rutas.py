@@ -41,6 +41,8 @@ REGLAS = [
     Regla("POST", re.compile(r"^/api/v1/stock/articulos$"), "stock", ADMIN),
     Regla("PUT", re.compile(r"^/api/v1/stock/articulos/\d+$"), "stock", ADMIN),
     Regla("GET", re.compile(r"^/api/v1/pedidos/openapi\.json$"), "pedidos", PUBLICA),
+    # Estado del Circuit Breaker Pedidos -> Stock (vista en vivo del modo presentación)
+    Regla("GET", re.compile(r"^/api/v1/pedidos/health$"), "pedidos", PUBLICA, ""),
     Regla("POST", re.compile(r"^/api/v1/pedidos$"), "pedidos", AUTENTICADO, "/v1/pedidos"),
     Regla("GET", re.compile(r"^/api/v1/pedidos$"), "pedidos", AUTENTICADO, "/v1/pedidos"),
     Regla("GET", re.compile(rf"^/api/v1/pedidos/{UUID}$"), "pedidos", AUTENTICADO, "/v1/pedidos"),

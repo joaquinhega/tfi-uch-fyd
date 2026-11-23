@@ -56,8 +56,10 @@ def _confirmar(pedido_id: str, reserva: dict) -> None:
             raise RuntimeError("Fallo inyectado después de reservar (FAULT_AFTER_RESERVE=true)")
         pedido = PedidoDao(session).obtener(pedido_id)
         precios = {i["articulo_id"]: Decimal(str(i["precio_unitario"])) for i in reserva["items"]}
+        nombres = {i["articulo_id"]: i["nombre"] for i in reserva["items"]}
         total = Decimal("0")
         for item in pedido.items:
+            item.nombre = nombres[item.articulo_id]
             item.precio_unitario = precios[item.articulo_id]
             item.subtotal = item.precio_unitario * item.cantidad
             total += item.subtotal

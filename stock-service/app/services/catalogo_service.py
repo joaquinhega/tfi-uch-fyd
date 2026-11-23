@@ -54,7 +54,15 @@ class CatalogoService:
         with self.session.begin():
             if self.dao.existe_codigo(codigo):
                 raise ErrorNegocio(409, "CODIGO_EXISTENTE", f"Ya existe un artículo con código {codigo}")
-            articulo = Articulo(codigo=codigo, nombre=datos.nombre.strip(), stock=datos.stock, precio=datos.precio)
+            articulo = Articulo(
+                codigo=codigo,
+                nombre=datos.nombre.strip(),
+                categoria=datos.categoria.strip(),
+                descripcion=datos.descripcion.strip(),
+                imagen=(datos.imagen or "").strip() or None,
+                stock=datos.stock,
+                precio=datos.precio,
+            )
             self.dao.agregar(articulo)
         cache_catalogo.invalidar()
         log("info", "artículo creado", codigo=codigo)

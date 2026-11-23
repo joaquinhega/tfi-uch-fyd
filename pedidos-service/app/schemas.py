@@ -18,6 +18,7 @@ class ItemPedidoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     articulo_id: int
+    nombre: str | None
     cantidad: int
     precio_unitario: Decimal | None
     subtotal: Decimal | None
